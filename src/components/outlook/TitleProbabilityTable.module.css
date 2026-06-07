@@ -1,0 +1,37 @@
+.table th, .table td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.table th:hover {
+  color: var(--text-heading);
+}
+
+.table th.active {
+  color: var(--accent);
+}
+
+.numCell {
+  text-align: right;
+  width: 1%;
+}
+
+.rank {
+  color: var(--text-muted);
+  width: 1%;
+  text-align: right;
+  font-size: 13px;
+}

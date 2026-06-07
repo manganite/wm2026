@@ -1,0 +1,65 @@
+{
+  "_comment": "Elo values are APPROXIMATE seed ratings (World-Football-Elo style, mid-2026). Replace with live values from eloratings.net before relying on the numbers. Only the relative ordering drives the simulation.",
+  "ratingSystem": "elo",
+  "teams": [
+    { "code": "MEX", "name": "Mexico",                 "group": "A", "confed": "CONCACAF", "elo": 1820 },
+    { "code": "RSA", "name": "South Africa",           "group": "A", "confed": "CAF",      "elo": 1690 },
+    { "code": "KOR", "name": "Korea Republic",         "group": "A", "confed": "AFC",      "elo": 1785 },
+    { "code": "CZE", "name": "Czechia",                "group": "A", "confed": "UEFA",     "elo": 1795 },
+
+    { "code": "CAN", "name": "Canada",                 "group": "B", "confed": "CONCACAF", "elo": 1775 },
+    { "code": "BIH", "name": "Bosnia and Herzegovina", "group": "B", "confed": "UEFA",     "elo": 1735 },
+    { "code": "QAT", "name": "Qatar",                  "group": "B", "confed": "AFC",      "elo": 1685 },
+    { "code": "SUI", "name": "Switzerland",            "group": "B", "confed": "UEFA",     "elo": 1860 },
+
+    { "code": "BRA", "name": "Brazil",                 "group": "C", "confed": "CONMEBOL", "elo": 2030 },
+    { "code": "MAR", "name": "Morocco",                "group": "C", "confed": "CAF",      "elo": 1890 },
+    { "code": "HAI", "name": "Haiti",                  "group": "C", "confed": "CONCACAF", "elo": 1610 },
+    { "code": "SCO", "name": "Scotland",               "group": "C", "confed": "UEFA",     "elo": 1800 },
+
+    { "code": "USA", "name": "United States",          "group": "D", "confed": "CONCACAF", "elo": 1805 },
+    { "code": "PAR", "name": "Paraguay",               "group": "D", "confed": "CONMEBOL", "elo": 1760 },
+    { "code": "AUS", "name": "Australia",              "group": "D", "confed": "AFC",      "elo": 1715 },
+    { "code": "TUR", "name": "Türkiye",                "group": "D", "confed": "UEFA",     "elo": 1780 },
+
+    { "code": "GER", "name": "Germany",                "group": "E", "confed": "UEFA",     "elo": 1965 },
+    { "code": "CUW", "name": "Curaçao",                "group": "E", "confed": "CONCACAF", "elo": 1590 },
+    { "code": "CIV", "name": "Ivory Coast",            "group": "E", "confed": "CAF",      "elo": 1800 },
+    { "code": "ECU", "name": "Ecuador",                "group": "E", "confed": "CONMEBOL", "elo": 1850 },
+
+    { "code": "NED", "name": "Netherlands",            "group": "F", "confed": "UEFA",     "elo": 2015 },
+    { "code": "JPN", "name": "Japan",                  "group": "F", "confed": "AFC",      "elo": 1900 },
+    { "code": "SWE", "name": "Sweden",                 "group": "F", "confed": "UEFA",     "elo": 1815 },
+    { "code": "TUN", "name": "Tunisia",                "group": "F", "confed": "CAF",      "elo": 1715 },
+
+    { "code": "BEL", "name": "Belgium",                "group": "G", "confed": "UEFA",     "elo": 1945 },
+    { "code": "EGY", "name": "Egypt",                  "group": "G", "confed": "CAF",      "elo": 1750 },
+    { "code": "IRN", "name": "Iran",                   "group": "G", "confed": "AFC",      "elo": 1800 },
+    { "code": "NZL", "name": "New Zealand",            "group": "G", "confed": "OFC",      "elo": 1585 },
+
+    { "code": "ESP", "name": "Spain",                  "group": "H", "confed": "UEFA",     "elo": 2150 },
+    { "code": "CPV", "name": "Cape Verde",             "group": "H", "confed": "CAF",      "elo": 1615 },
+    { "code": "KSA", "name": "Saudi Arabia",           "group": "H", "confed": "AFC",      "elo": 1645 },
+    { "code": "URU", "name": "Uruguay",                "group": "H", "confed": "CONMEBOL", "elo": 1950 },
+
+    { "code": "FRA", "name": "France",                 "group": "I", "confed": "UEFA",     "elo": 2095 },
+    { "code": "SEN", "name": "Senegal",                "group": "I", "confed": "CAF",      "elo": 1860 },
+    { "code": "IRQ", "name": "Iraq",                   "group": "I", "confed": "AFC",      "elo": 1620 },
+    { "code": "NOR", "name": "Norway",                 "group": "I", "confed": "UEFA",     "elo": 1860 },
+
+    { "code": "ARG", "name": "Argentina",              "group": "J", "confed": "CONMEBOL", "elo": 2125 },
+    { "code": "ALG", "name": "Algeria",                "group": "J", "confed": "CAF",      "elo": 1775 },
+    { "code": "AUT", "name": "Austria",                "group": "J", "confed": "UEFA",     "elo": 1845 },
+    { "code": "JOR", "name": "Jordan",                 "group": "J", "confed": "AFC",      "elo": 1615 },
+
+    { "code": "POR", "name": "Portugal",               "group": "K", "confed": "UEFA",     "elo": 2005 },
+    { "code": "COD", "name": "DR Congo",               "group": "K", "confed": "CAF",      "elo": 1715 },
+    { "code": "UZB", "name": "Uzbekistan",             "group": "K", "confed": "AFC",      "elo": 1680 },
+    { "code": "COL", "name": "Colombia",               "group": "K", "confed": "CONMEBOL", "elo": 1955 },
+
+    { "code": "ENG", "name": "England",                "group": "L", "confed": "UEFA",     "elo": 2055 },
+    { "code": "CRO", "name": "Croatia",                "group": "L", "confed": "UEFA",     "elo": 1900 },
+    { "code": "GHA", "name": "Ghana",                  "group": "L", "confed": "CAF",      "elo": 1745 },
+    { "code": "PAN", "name": "Panama",                 "group": "L", "confed": "CONCACAF", "elo": 1700 }
+  ]
+}

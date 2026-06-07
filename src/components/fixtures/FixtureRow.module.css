@@ -1,0 +1,57 @@
+.row {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.matchup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 220px;
+  font-size: 14px;
+}
+
+.id {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  width: 54px;
+}
+
+.vs {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.score {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+
+.shootout {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.predictionWrap {
+  margin-top: 10px;
+}
+
+.tbd {
+  font-size: 13px;
+  color: var(--text-muted);
+}

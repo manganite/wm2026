@@ -1,0 +1,97 @@
+.bracket {
+  display: flex;
+  align-items: stretch;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 4px 4px 16px;
+}
+
+.round {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  min-width: 220px;
+}
+
+.roundTitle {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* Stretches to the height of the tallest round (R32) and spaces its matches
+   evenly — successive halvings then naturally line up with the midpoint of
+   the pair that feeds them, giving a bracket shape with plain CSS. */
+.matches {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 14px;
+}
+
+.match {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.matchId {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 4px 10px 0;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+
+.slot + .slot {
+  border-top: 1px solid var(--border);
+}
+
+.slot.winner {
+  font-weight: 600;
+  background: var(--win-bg);
+}
+
+.slotName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slotScore {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.projection {
+  border-top: 1px solid var(--border);
+  padding: 5px 10px;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-muted);
+}
+
+.projection span {
+  font-family: var(--sans);
+}
+
+.note {
+  font-size: 12px;
+  margin-top: 4px;
+}
