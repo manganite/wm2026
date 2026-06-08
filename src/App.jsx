@@ -133,26 +133,21 @@ export default function App() {
         </p>
       </header>
 
-      <section className="section">
-        <h2>Start point</h2>
-        <p className="muted">
-          Simulate forward from the real results entered so far, or — purely for illustration —
-          from a projection where undecided matches are filled in with the model's most-likely
-          outcome: just the group stage, or propagated all the way through the bracket to a
-          complete, single hypothetical tournament. Real tournaments are not decided by modal
-          scorelines, and the further a projection reaches, the more these per-match guesses
-          compound — six rounds of "most likely" picks chained together is one low-probability
-          path through the bracket, not a forecast of what will actually happen.
-        </p>
-        <StartPointSelector value={startPoint} onChange={setStartPoint} />
-      </section>
-
-      <section className="section">
-        <h2>Simulation</h2>
-        <SimulationControls runs={runs} onRunsChange={setRuns} status={sim.status} />
+      <div className="section">
+        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "flex-start" }}>
+          <StartPointSelector value={startPoint} onChange={setStartPoint} />
+          <SimulationControls runs={runs} onRunsChange={setRuns} status={sim.status} />
+        </div>
+        {startPoint !== "pretournament" && (
+          <p className="muted" style={{ marginTop: "10px" }}>
+            Projections fill undecided matches with the model's most-likely outcome — purely
+            illustrative. Six rounds of "most likely" picks chain into one low-probability path,
+            not a forecast of what will actually happen.
+          </p>
+        )}
         {simRunning && <LoadingState label={`Running ${runs.toLocaleString()} simulated tournaments…`} />}
         {sim.status === "error" && <ErrorBanner message={`Simulation failed: ${sim.error}`} />}
-      </section>
+      </div>
 
       {sim.status === "done" && (
         <>
@@ -212,16 +207,18 @@ export default function App() {
             />
           </section>
 
-          <section className="section">
-            <h2>Model accuracy so far</h2>
-            <p className="muted">
-              A running track record: how well the model's pre-match predictions have matched the
-              real results entered into <span className="mono">data/results.json</span> so far.
-            </p>
-            <div className="card">
-              <AccuracyReadout accuracy={accuracy} />
-            </div>
-          </section>
+          {accuracy && (
+            <section className="section">
+              <h2>Model accuracy so far</h2>
+              <p className="muted">
+                A running track record: how well the model's pre-match predictions have matched the
+                real results entered into <span className="mono">data/results.json</span> so far.
+              </p>
+              <div className="card">
+                <AccuracyReadout accuracy={accuracy} />
+              </div>
+            </section>
+          )}
         </>
       )}
     </main>

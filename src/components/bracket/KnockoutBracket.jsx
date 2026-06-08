@@ -85,6 +85,15 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
 
   return (
     <div>
+      <p className={`muted ${styles.note}`}>
+        Undetermined slots show which teams the simulation has reaching that position and how
+        often — e.g. "Spain 18%" means Spain ends up in this bracket slot in 18% of all simulated
+        tournaments. Once real results concretely decide a slot (group winner, shootout winner,
+        etc.) it fills in with that team. For matches where both sides are already known but not
+        yet played, a "Projected" scoreline shows the model's single most-likely outcome with its
+        probability — a guess, not a result; the full win/draw/tendency and xG breakdown for the
+        same match is in Fixtures → Knockout stage.
+      </p>
       <div className={styles.bracket}>
         {rounds.map(({ stage, matches }) => (
           <div className={styles.round} key={stage}>
@@ -106,16 +115,6 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
           </div>
         ))}
       </div>
-      <p className={`muted ${styles.note}`}>
-        "Projected" scorelines are the model's single most-likely outcome for matches whose two
-        sides are now concretely known — shown with their probability so they read as a guess, not
-        a result. The full win/draw/tendency and xG breakdown for the same matches is in Fixtures
-        → Knockout stage. Slots still labelled by description (e.g. "Group A winner") show, beneath
-        it, which teams the simulation actually has reaching that slot and how often — the
-        advancement probabilities feeding it, straight from the full run distribution, not a guess
-        at a single occupant. The bracket only fills the slot itself in once results or shootouts
-        concretely decide it.
-      </p>
     </div>
   );
 }
