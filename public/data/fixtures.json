@@ -1,5 +1,5 @@
 {
-  "_comment": "Group fixtures are the real WC2026 schedule (home team listed first). Knockout refs: {win|run|w|t}. 'win'=group winner, 'run'=group runner-up, 'w'=winner of a prior match, 't'=a best-third slot with an allowed-group set (official FIFA mechanic). R16+ bracket adjacency below is a clean stand-in pairing consecutive R32 winners; swap in the official adjacency if needed.",
+  "_comment": "Group fixtures are the real WC2026 schedule (home team listed first). Knockout refs: {win|run|w|t}. 'win'=group winner, 'run'=group runner-up, 'w'=winner of a prior match, 't'=a best-third slot with an allowed-group set (official FIFA mechanic). R16+ bracket adjacency mirrors FIFA's official knockout schedule (Match 73-104: R32=73-88, R16=89-96, QF=97-100, SF=101-102, Final=104) verbatim — each R32-N here is the unique official match with that exact group-reference pair, and each R16/QF/SF/Final pairing follows the official 'winner of match X meets winner of match Y' tree.",
   "groupStage": [
     { "id": "GA1", "group": "A", "date": "2026-06-11", "home": "MEX", "away": "RSA" },
     { "id": "GA2", "group": "A", "date": "2026-06-11", "home": "KOR", "away": "CZE" },
@@ -103,18 +103,18 @@
     { "id": "R32-15", "stage": "R32", "home": { "win": "J" }, "away": { "run": "H" } },
     { "id": "R32-16", "stage": "R32", "home": { "win": "K" }, "away": { "t": ["D","E","I","J","L"] } },
 
-    { "id": "R16-1", "stage": "R16", "home": { "w": "R32-1" },  "away": { "w": "R32-2" } },
-    { "id": "R16-2", "stage": "R16", "home": { "w": "R32-3" },  "away": { "w": "R32-4" } },
-    { "id": "R16-3", "stage": "R16", "home": { "w": "R32-5" },  "away": { "w": "R32-6" } },
+    { "id": "R16-1", "stage": "R16", "home": { "w": "R32-3" },  "away": { "w": "R32-6" } },
+    { "id": "R16-2", "stage": "R16", "home": { "w": "R32-1" },  "away": { "w": "R32-4" } },
+    { "id": "R16-3", "stage": "R16", "home": { "w": "R32-2" },  "away": { "w": "R32-5" } },
     { "id": "R16-4", "stage": "R16", "home": { "w": "R32-7" },  "away": { "w": "R32-8" } },
-    { "id": "R16-5", "stage": "R16", "home": { "w": "R32-9" },  "away": { "w": "R32-10" } },
-    { "id": "R16-6", "stage": "R16", "home": { "w": "R32-11" }, "away": { "w": "R32-12" } },
-    { "id": "R16-7", "stage": "R16", "home": { "w": "R32-13" }, "away": { "w": "R32-14" } },
-    { "id": "R16-8", "stage": "R16", "home": { "w": "R32-15" }, "away": { "w": "R32-16" } },
+    { "id": "R16-5", "stage": "R16", "home": { "w": "R32-12" }, "away": { "w": "R32-11" } },
+    { "id": "R16-6", "stage": "R16", "home": { "w": "R32-10" }, "away": { "w": "R32-9" } },
+    { "id": "R16-7", "stage": "R16", "home": { "w": "R32-15" }, "away": { "w": "R32-14" } },
+    { "id": "R16-8", "stage": "R16", "home": { "w": "R32-13" }, "away": { "w": "R32-16" } },
 
     { "id": "QF-1", "stage": "QF", "home": { "w": "R16-1" }, "away": { "w": "R16-2" } },
-    { "id": "QF-2", "stage": "QF", "home": { "w": "R16-3" }, "away": { "w": "R16-4" } },
-    { "id": "QF-3", "stage": "QF", "home": { "w": "R16-5" }, "away": { "w": "R16-6" } },
+    { "id": "QF-2", "stage": "QF", "home": { "w": "R16-5" }, "away": { "w": "R16-6" } },
+    { "id": "QF-3", "stage": "QF", "home": { "w": "R16-3" }, "away": { "w": "R16-4" } },
     { "id": "QF-4", "stage": "QF", "home": { "w": "R16-7" }, "away": { "w": "R16-8" } },
 
     { "id": "SF-1", "stage": "SF", "home": { "w": "QF-1" }, "away": { "w": "QF-2" } },

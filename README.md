@@ -139,12 +139,16 @@ and add a Pages deploy workflow. For a project page, set the Vite `base` to
   drift after every match, including friendlies, so this is a snapshot rather
   than a continuously-synced feed: re-capture before relying on the numbers for
   a date far from the one recorded there.
+- **R16+ bracket adjacency** mirrors FIFA's official knockout schedule
+  (Match 73–104: R32 = 73–88, R16 = 89–96, QF = 97–100, SF = 101–102,
+  Final = 104) verbatim — every `R32-N` here is the unique official match with
+  that exact group-reference pair, and every R16/QF/SF/Final pairing follows
+  the official "winner of match X meets winner of match Y" tree, not a
+  same-order stand-in — see the `_comment` in `data/fixtures.json`.
 
 **Still approximate / open for refinement:**
 
-1. **R16+ bracket adjacency** pairs consecutive R32 winners — a clean stand-in.
-   Swap in the official adjacency if the precise semifinal pairings matter.
-2. **Group tiebreakers** follow GD → GF → head-to-head → (random for fair-play /
+1. **Group tiebreakers** follow GD → GF → head-to-head → (random for fair-play /
    lots). Order is easy to change in `simulateGroup`.
-3. **Calibration**: compare title probabilities against bookmaker odds and
+2. **Calibration**: compare title probabilities against bookmaker odds and
    back-test before trusting the numbers.
