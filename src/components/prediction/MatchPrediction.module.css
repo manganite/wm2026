@@ -70,6 +70,32 @@
   color: var(--text-muted);
 }
 
+.byOutcome {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.outcomeRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.outcomeRow .tag {
+  width: 64px;
+  color: var(--text-muted);
+}
+
+.outcomeRow .score {
+  font-size: 14px;
+}
+
+.outcomeRow .scoreProb {
+  margin-left: 0;
+}
+
 .xg {
   font-family: var(--mono);
   font-size: 18px;

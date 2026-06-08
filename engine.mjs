@@ -6,6 +6,8 @@
 //  Played matches (from results) are conditioned on, not sampled.
 // ============================================================================
 
+import { ANNEX_C_WINNERS, ANNEX_C_ROWS } from "./thirdPlaceAssignments.mjs";
+
 export const PARAMS = {
   BASE_TOTAL: 2.65,     // avg total goals in an even match
   ELO_PER_GOAL: 220,    // Elo gap that buys ~1 goal of supremacy
@@ -93,6 +95,11 @@ export function predictMatch(eloH, eloA, params = PARAMS) {
   const { lamH, lamA } = eloToLambdas(eloH, eloA, params);
   const sm = buildScoreMatrix(lamH, lamA, params);
   let best = { h: 0, a: 0, p: 0 };
+  // argmax cell within each outcome bucket — the "if this outcome happens,
+  // here's the most likely exact score" complement to the global mode (which,
+  // in low-scoring matches, is very often the draw cell even when one side is
+  // the clear favourite — a real property of Poisson-ish scorelines, not a bug).
+  let bestH = { h: 0, a: 0, p: 0 }, bestD = { h: 0, a: 0, p: 0 }, bestA = { h: 0, a: 0, p: 0 };
   const cells = [];
   let pH = 0, pD = 0, pA = 0;
   for (let h = 0; h <= params.MAX_GOALS; h++)
@@ -100,11 +107,21 @@ export function predictMatch(eloH, eloA, params = PARAMS) {
       const p = sm.M[h][a];
       cells.push({ h, a, p });
       if (p > best.p) best = { h, a, p };
-      if (h > a) pH += p; else if (h === a) pD += p; else pA += p;
+      if (h > a) { pH += p; if (p > bestH.p) bestH = { h, a, p }; }
+      else if (h === a) { pD += p; if (p > bestD.p) bestD = { h, a, p }; }
+      else { pA += p; if (p > bestA.p) bestA = { h, a, p }; }
     }
   cells.sort((x, y) => y.p - x.p);
   return {
     mostLikely: { score: [best.h, best.a], prob: best.p },
+    mostLikelyByOutcome: {
+      // probabilities are conditional on the outcome — "given the home side
+      // wins, there's an X% chance it's specifically this score" — not
+      // weighted by how likely that outcome itself is (see `tendency` for that).
+      homeWin: { score: [bestH.h, bestH.a], prob: bestH.p / pH },
+      draw: { score: [bestD.h, bestD.a], prob: bestD.p / pD },
+      awayWin: { score: [bestA.h, bestA.a], prob: bestA.p / pA },
+    },
     top3: cells.slice(0, 3).map(c => ({ score: [c.h, c.a], prob: c.p })),
     tendency: { homeWin: pH, draw: pD, awayWin: pA },
     expectedGoals: [lamH, lamA],
@@ -168,43 +185,27 @@ export function pickBestThirds(thirds, rng) {
   return arr.slice(0, 8); // [{group, row}]
 }
 
-// Assign the 8 qualifying thirds to the 8 third-slots, respecting allowed groups.
-// Real bipartite matching (Kuhn's algorithm) so a valid complete assignment is
-// always found when one exists. Stand-in for FIFA's exact published lookup table.
-export function assignThirds(qualThirds, slotDefs, rng) {
-  const groupOfThird = new Set(qualThirds.map(q => q.group));
+// FIFA's official Annex C table, keyed by the sorted-letters combination of
+// qualifying groups (a pure function of the combination — see
+// thirdPlaceAssignments.mjs for the source and validation).
+const THIRD_PLACE_LOOKUP = new Map();
+for (let i = 0; i < ANNEX_C_ROWS.length; i++) {
+  const letters = ANNEX_C_ROWS[i];
+  const byWinner = {};
+  for (let j = 0; j < ANNEX_C_WINNERS.length; j++) byWinner[ANNEX_C_WINNERS[j]] = letters[j];
+  const combo = letters.split("").sort().join("");
+  THIRD_PLACE_LOOKUP.set(combo, byWinner);
+}
+
+// Assign the 8 qualifying thirds to the 8 third-slots using FIFA's official
+// Annex C lookup table: for the specific combination of 8 qualifying groups,
+// it specifies exactly which group's third faces each fixed group-winner.
+export function assignThirds(qualThirds, slotDefs) {
   const byGroup = {}; for (const q of qualThirds) byGroup[q.group] = q;
-
-  // bipartite graph: slot -> allowed groups that actually have a qualifying third
-  const slots = slotDefs.map(s => ({
-    slotId: s.slotId,
-    cands: s.allowed.filter(g => groupOfThird.has(g)),
-  }));
-  const matchGroupToSlot = {}; // group -> slotId
-  function tryKuhn(slot, visited) {
-    for (const g of slot.cands) {
-      if (visited.has(g)) continue;
-      visited.add(g);
-      if (!(g in matchGroupToSlot) ||
-          tryKuhn(slots.find(s => s.slotId === matchGroupToSlot[g]), visited)) {
-        matchGroupToSlot[g] = slot.slotId;
-        return true;
-      }
-    }
-    return false;
-  }
-  for (const slot of slots) tryKuhn(slot, new Set());
-
+  const combo = qualThirds.map(q => q.group).sort().join("");
+  const byWinner = THIRD_PLACE_LOOKUP.get(combo);
   const assignment = {};
-  const usedGroups = new Set();
-  for (const g in matchGroupToSlot) { assignment[matchGroupToSlot[g]] = byGroup[g]; usedGroups.add(g); }
-
-  // defensive fallback: if any slot stayed empty, fill it with a leftover third
-  const leftoverThirds = qualThirds.filter(q => !usedGroups.has(q.group));
-  for (const slot of slots) {
-    if (!assignment[slot.slotId] && leftoverThirds.length)
-      assignment[slot.slotId] = leftoverThirds.shift();
-  }
+  for (const slot of slotDefs) assignment[slot.slotId] = byGroup[byWinner[slot.fixedWinner]];
   return assignment;
 }
 
@@ -266,7 +267,7 @@ export function simulateTournament(ctx, rng) {
     thirds.push({ group: g, row: table[2] });
   }
   const best = pickBestThirds(thirds, rng);
-  const thirdAssign = assignThirds(best, slotDefs, rng);
+  const thirdAssign = assignThirds(best, slotDefs);
 
   // resolve match participants and play through the bracket
   const resultWinner = {};
@@ -344,15 +345,19 @@ export function buildContext(data, results, params = PARAMS) {
     koET: (h, a) => koMatrix(h, a, params.ET_FACTOR),
   };
 
-  // slot defs: give each t-ref a stable slotId derived from its allowed set + match
+  // slot defs: give each t-ref a stable slotId derived from its allowed set + match.
+  // `fixedWinner` is the group letter of the fixed group-winner this slot faces
+  // (the official R32 schedule always pairs a Best-3rd slot against a group
+  // winner on the other side of the same match) — the key Annex C looks up by.
   const slotDefs = [];
   for (const m of data.fixtures.knockout) {
     for (const side of ["home", "away"]) {
       const ref = m[side];
       if (ref.t) {
+        const other = m[side === "home" ? "away" : "home"];
         const slotId = m.id + ":" + side;
         ref._slotId = slotId;
-        slotDefs.push({ slotId, allowed: ref.t });
+        slotDefs.push({ slotId, allowed: ref.t, fixedWinner: other.win });
       }
     }
   }

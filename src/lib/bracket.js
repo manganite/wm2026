@@ -57,7 +57,7 @@ export function buildKnockoutResolution(data, results) {
     const bestA = pickBestThirds(thirdsRows, makeRng(1));
     const bestB = pickBestThirds(thirdsRows, makeRng(2));
     const sameQualifiers = bestA.every((t, i) => t.group === bestB[i].group);
-    if (sameQualifiers) thirdAssign = assignThirds(bestA, slotDefs, makeRng(1));
+    if (sameQualifiers) thirdAssign = assignThirds(bestA, slotDefs);
   }
 
   function resolveRef(ref) {

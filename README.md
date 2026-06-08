@@ -87,9 +87,11 @@ and add a Pages deploy workflow. For a project page, set the Vite `base` to
 ## Documented caveats (to refine for full fidelity)
 
 1. **Elo values are approximate seeds.** Replace with live eloratings.net values.
-2. **Best-thirds assignment** uses a constraint-respecting bipartite matching,
-   not FIFA's exact published permutation table. Structurally correct; the exact
-   slot a given third lands in may differ in edge cases.
+2. **Best-thirds assignment** uses FIFA's official Annex C lookup table verbatim
+   (495 rows — one per possible combination of which 8 of the 12 groups produce
+   a qualifying third-placed team), extracted from the WC 26 Regulations and
+   verified for full, gap-free coverage of all C(12,8) combinations — see
+   `thirdPlaceAssignments.mjs`.
 3. **R16+ bracket adjacency** pairs consecutive R32 winners — a clean stand-in.
    Swap in the official adjacency if the precise semifinal pairings matter.
 4. **Group tiebreakers** follow GD → GF → head-to-head → (random for fair-play /
