@@ -133,54 +133,138 @@ function emptyRow(code) {
   return { code, pts: 0, gf: 0, ga: 0, gd: 0, played: 0 };
 }
 
-// Standings for one group, conditioning on played results.
+// Standings for one group, conditioning on played results. Ranking follows
+// FIFA's official Article 13 (2026 regulations): points, then — for teams
+// level on points — a head-to-head mini-league (points/GD/GF from just their
+// mutual matches, recursively re-run on whichever subset still can't be
+// separated, per Article 13 "Step 2"), then overall GD, overall GF, and
+// finally a single random draw. That draw stands in for Article 13's two
+// remaining criteria — team conduct ("fair play") score and FIFA World
+// Ranking — neither of which this goals-only model can evaluate: no
+// card/discipline data is simulated, and Elo is a different rating system to
+// FIFA's (see the _comment in data/teams.json — "only the relative ordering
+// drives the simulation"). It's an honest, unbiased resolution of a tie the
+// model genuinely has no signal on, not a pretence at reproducing those rules.
 export function simulateGroup(groupCode, teamsByGroup, matrices, results, rng) {
   const rows = {};
   for (const t of teamsByGroup[groupCode]) rows[t.code] = emptyRow(t.code);
   const matches = matrices.group[groupCode];
-  const h2h = {}; // "A|B" -> goal record, for tie-breaking
+  const played = []; // { home, away, gh, ga } — raw match list for mini-leagues
   for (const m of matches) {
     let gh, ga;
-    const played = results.matches[m.id];
-    if (played) { gh = played[0]; ga = played[1]; }
+    const entered = results.matches[m.id];
+    if (entered) { gh = entered[0]; ga = entered[1]; }
     else { [gh, ga] = sampleFromMatrix(m.sm, rng); }
     const H = rows[m.home], A = rows[m.away];
     H.gf += gh; H.ga += ga; A.gf += ga; A.ga += gh; H.played++; A.played++;
     if (gh > ga) H.pts += 3; else if (gh < ga) A.pts += 3; else { H.pts++; A.pts++; }
-    h2h[m.home + "|" + m.away] = [gh, ga];
+    played.push({ home: m.home, away: m.away, gh, ga });
   }
   const arr = Object.values(rows);
   for (const r of arr) r.gd = r.gf - r.ga;
-  // sort: pts, gd, gf, then mini-league head-to-head among exact ties, then rng
-  arr.sort((x, y) => {
-    if (y.pts !== x.pts) return y.pts - x.pts;
-    if (y.gd !== x.gd) return y.gd - x.gd;
-    if (y.gf !== x.gf) return y.gf - x.gf;
-    const hh = miniLeague(x.code, y.code, h2h);
-    if (hh !== 0) return hh;
-    return rng() - 0.5;
-  });
-  return arr; // index 0..3 = 1st..4th
+
+  // One random key per team, assigned once: `rng()` called from inside a sort
+  // comparator would run a variable, engine-dependent number of times per
+  // pair and yield a biased, non-uniform order — not the fair draw intended.
+  const drawKey = {};
+  for (const r of arr) drawKey[r.code] = rng();
+
+  return rankStandings(arr, played, drawKey);
 }
 
-// head-to-head between two teams tied on pts/gd/gf
-function miniLeague(a, b, h2h) {
-  const rec = h2h[a + "|" + b] || (h2h[b + "|" + a] ? [h2h[b + "|" + a][1], h2h[b + "|" + a][0]] : null);
-  if (!rec) return 0;
-  const [ga, gb] = rec;
-  if (ga > gb) return -1;       // a ranks higher
-  if (ga < gb) return 1;
-  return 0;
+// Tiers teams by points (Article 13's entry criterion), then resolves each
+// tied tier in turn.
+function rankStandings(rows, played, drawKey) {
+  const out = [];
+  for (const tier of tierBy(rows, (r) => r.pts)) {
+    out.push(...(tier.length === 1 ? tier : resolveTie(tier, played, drawKey)));
+  }
+  return out;
+}
+
+// Article 13 Step 1+2: rank by a head-to-head mini-league (points, then GD,
+// then GF — counting only matches among `teams`); any run that's still fully
+// tied on all three gets the mini-league recomputed and re-applied to just
+// that smaller subset ("Step 2" narrowing). A run that doesn't shrink at all
+// (e.g. a perfect 3-way cycle: A beat B beat C beat A, all level on pts/GD/GF)
+// can never be separated this way — Article 13 says fall through to d)-h).
+function resolveTie(teams, played, drawKey) {
+  const mini = miniLeagueTable(teams, played);
+  const ranked = teams.slice().sort((x, y) => {
+    const mx = mini.get(x.code), my = mini.get(y.code);
+    return my.pts - mx.pts || my.gd - mx.gd || my.gf - mx.gf;
+  });
+  const runs = [];
+  for (const r of ranked) {
+    const last = runs[runs.length - 1];
+    if (last && sameMini(mini.get(last[0].code), mini.get(r.code))) last.push(r);
+    else runs.push([r]);
+  }
+  if (runs.length === 1) return fallback(teams, drawKey); // no separation at all
+  const out = [];
+  for (const run of runs) out.push(...(run.length === 1 ? run : resolveTie(run, played, drawKey)));
+  return out;
+}
+
+function sameMini(a, b) {
+  return a.pts === b.pts && a.gd === b.gd && a.gf === b.gf;
+}
+
+// pts/gd/gf from only the matches played among `teams` — Article 13's
+// "matches between the teams concerned", recomputed fresh at each narrowing
+// (a smaller subset can have a different mini-league than its parent).
+function miniLeagueTable(teams, played) {
+  const codes = new Set(teams.map((t) => t.code));
+  const table = new Map(teams.map((t) => [t.code, { pts: 0, gf: 0, ga: 0, gd: 0 }]));
+  for (const { home, away, gh, ga } of played) {
+    if (!codes.has(home) || !codes.has(away)) continue;
+    const H = table.get(home), A = table.get(away);
+    H.gf += gh; H.ga += ga; A.gf += ga; A.ga += gh;
+    if (gh > ga) H.pts += 3; else if (gh < ga) A.pts += 3; else { H.pts++; A.pts++; }
+  }
+  for (const row of table.values()) row.gd = row.gf - row.ga;
+  return table;
+}
+
+// Article 13 d)-h): overall GD, then overall GF, then the single draw standing
+// in for conduct score and World Ranking (see simulateGroup's comment). These
+// are all per-team scalars, so — unlike head-to-head — a flat multi-key sort
+// already gives exactly "apply the next criterion to whoever's still tied,
+// without restarting", which is what Article 13 specifies for this stage.
+function fallback(teams, drawKey) {
+  return teams.slice().sort((x, y) =>
+    y.gd - x.gd || y.gf - x.gf || drawKey[x.code] - drawKey[y.code]
+  );
+}
+
+// Stable-groups `rows` into descending-by-`key(row)` tiers (`Array.sort` has
+// been stable since ES2019, so within-tier relative order is preserved).
+function tierBy(rows, key) {
+  const sorted = rows.slice().sort((x, y) => key(y) - key(x));
+  const tiers = [];
+  for (const r of sorted) {
+    const last = tiers[tiers.length - 1];
+    if (last && key(last[0]) === key(r)) last.push(r);
+    else tiers.push([r]);
+  }
+  return tiers;
 }
 
 // ---- best 8 of the 12 third-placed teams ------------------------------------
+// Order matches Article 13's best-thirds chain exactly — points, overall GD,
+// overall GF (head-to-head never applies: these teams played in different
+// groups). The final draw stands in for the same two criteria simulateGroup's
+// fallback does (team conduct score, FIFA World Ranking — see its comment),
+// using a random key assigned once per team rather than `rng()` from inside
+// the comparator (which would bias the order — see simulateGroup).
 export function pickBestThirds(thirds, rng) {
+  const drawKey = new Map(thirds.map((t) => [t, rng()]));
   const arr = thirds.slice();
   arr.sort((x, y) => {
     if (y.row.pts !== x.row.pts) return y.row.pts - x.row.pts;
     if (y.row.gd !== x.row.gd) return y.row.gd - x.row.gd;
     if (y.row.gf !== x.row.gf) return y.row.gf - x.row.gf;
-    return rng() - 0.5;
+    return drawKey.get(x) - drawKey.get(y);
   });
   return arr.slice(0, 8); // [{group, row}]
 }

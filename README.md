@@ -145,10 +145,20 @@ and add a Pages deploy workflow. For a project page, set the Vite `base` to
   that exact group-reference pair, and every R16/QF/SF/Final pairing follows
   the official "winner of match X meets winner of match Y" tree, not a
   same-order stand-in — see the `_comment` in `data/fixtures.json`.
+- **Group tiebreakers** follow Article 13 of the official 2026 regulations:
+  points, then — for teams level on points — a head-to-head mini-league
+  (points/GD/GF from just their mutual matches, recursively re-applied to
+  whichever subset still can't be separated), then overall GD, overall GF.
+  Article 13's two remaining criteria, team conduct ("fair play") score and
+  FIFA World Ranking, fold into a single random draw in `simulateGroup`'s
+  fallback: this goals-only model has no card/discipline data to compute the
+  former, and Elo — the rating system this project uses, see the `_comment` in
+  `data/teams.json` — is not a substitute for the latter. That draw is an
+  honest, unbiased resolution of a tie the model genuinely has no signal on,
+  not a stand-in for those rules. `pickBestThirds` mirrors the same idea for
+  the simpler (head-to-head-free) best-thirds chain.
 
 **Still approximate / open for refinement:**
 
-1. **Group tiebreakers** follow GD → GF → head-to-head → (random for fair-play /
-   lots). Order is easy to change in `simulateGroup`.
-2. **Calibration**: compare title probabilities against bookmaker odds and
+1. **Calibration**: compare title probabilities against bookmaker odds and
    back-test before trusting the numbers.
