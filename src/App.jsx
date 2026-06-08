@@ -23,12 +23,12 @@ import { StartPointSelector } from "./components/live/StartPointSelector.jsx";
 import { SimulationControls } from "./components/controls/SimulationControls.jsx";
 
 const EMPTY_RESULTS = { matches: {} };
+const KNOCKOUT_STAGE_MAP = { afterR32: "R32", afterR16: "R16", afterQF: "QF", afterSF: "SF", fullProjection: "F" };
 
 // Top-level assembly: loads data, runs the (worker-backed) simulation against
-// either the real entered results or a "what if the groups finished as
-// expected" projection, and lays out the five UI sections from the brief.
-// Deliberately thin — every non-trivial computation lives in lib/* or the
-// engine itself; this just wires data through to display components.
+// the real results or one of several projected start points, and lays out the
+// main UI sections. Deliberately thin — every non-trivial computation lives
+// in lib/* or the engine itself; this just wires data through to components.
 export default function App() {
   const { status, teams: teamsFile, fixtures, results, error } = useTournamentData();
   const [runs, setRuns] = useState(DEFAULT_RUNS);
@@ -55,14 +55,15 @@ export default function App() {
   // The results object actually fed to the simulation: real results, or — for
   // the projected start points — real results with undecided matches filled
   // in by the model's most-likely outcome (group stage only, or propagated
-  // all the way through the bracket — see lib/selectors.js).
+  // through selected knockout stages — see lib/selectors.js).
   const simResults = useMemo(() => {
     if (!results) return null;
-    if (startPoint === "groups" && baseline) return synthesizeGroupStageResults(results, baseline);
-    if (startPoint === "fullProjection" && baseline && baselineCtx) {
-      return synthesizeFullTournamentResults(data, results, baseline, baselineCtx, PARAMS);
-    }
-    return results;
+    if (startPoint === "pretournament") return results;
+    if (!baseline) return results;
+    if (startPoint === "afterGroups") return synthesizeGroupStageResults(results, baseline);
+    if (!baselineCtx) return results;
+    const stopAfterStage = KNOCKOUT_STAGE_MAP[startPoint] ?? "F";
+    return synthesizeFullTournamentResults(data, results, baseline, baselineCtx, PARAMS, { stopAfterStage });
   }, [results, startPoint, baseline, baselineCtx, data]);
 
   const sim = useSimulation({ data, results: simResults, N: runs, seed: DEFAULT_SEED });
@@ -142,8 +143,8 @@ export default function App() {
         {startPoint !== "pretournament" && (
           <p className="muted" style={{ marginTop: "10px" }}>
             Projections fill undecided matches with the model's most-likely outcome — purely
-            illustrative. Six rounds of "most likely" picks chain into one low-probability path,
-            not a forecast of what will actually happen.
+            illustrative. Most-likely picks chained round by round compound into a
+            low-probability path, not a forecast of what will actually happen.
           </p>
         )}
         {simRunning && <LoadingState label={`Running ${runs.toLocaleString()} simulated tournaments…`} />}

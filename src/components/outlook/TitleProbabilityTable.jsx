@@ -4,6 +4,7 @@ import { ProbBar } from "../common/ProbBar.jsx";
 import styles from "./TitleProbabilityTable.module.css";
 
 const COLUMNS = [
+  { key: "R32", label: "Reach R32" },
   { key: "R16", label: "Reach R16" },
   { key: "QF", label: "Reach QF" },
   { key: "SF", label: "Reach SF" },

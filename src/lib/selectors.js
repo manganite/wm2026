@@ -79,7 +79,22 @@ export function synthesizeGroupStageResults(baseResults, groupPredictions) {
 // a synthesized score next to a still-generic "Best 3rd (...)" label.
 export const PROJECTION_TIE_BREAK_SEED = 1;
 
-export function synthesizeFullTournamentResults(data, baseResults, baseline, ctx, params) {
+const KNOCKOUT_STAGE_ORDER = ["R32", "R16", "QF", "SF", "F"];
+
+// `stopAfterStage` (default "F") limits how far the knockout projection
+// propagates — passing "R32" fills only R32 matches, "R16" fills R32+R16, etc.
+// Used to synthesize the "After R32", "After R16", etc. start points.
+export function synthesizeFullTournamentResults(
+  data,
+  baseResults,
+  baseline,
+  ctx,
+  params,
+  { stopAfterStage = "F" } = {}
+) {
+  const stopIdx = KNOCKOUT_STAGE_ORDER.indexOf(stopAfterStage);
+  const allowedStages = new Set(KNOCKOUT_STAGE_ORDER.slice(0, stopIdx + 1));
+
   const matches = { ...baseResults.matches };
   for (const p of baseline) {
     if (matches[p.id] || p.played) continue;
@@ -93,6 +108,7 @@ export function synthesizeFullTournamentResults(data, baseResults, baseline, ctx
     const additions = {};
     for (const m of data.fixtures.knockout) {
       if (synthetic.matches[m.id]) continue;
+      if (!allowedStages.has(m.stage)) continue;
       const slot = resolution.get(m.id);
       if (!slot?.bothKnown) continue;
       const prediction = predictMatch(ctx.eloOf[slot.home], ctx.eloOf[slot.away], params);
@@ -106,6 +122,10 @@ export function synthesizeFullTournamentResults(data, baseResults, baseline, ctx
 
 export const START_POINTS = [
   { id: "pretournament", label: "Pre-tournament" },
-  { id: "groups", label: "After group stage (projected)" },
-  { id: "fullProjection", label: "Full tournament (projected)" },
+  { id: "afterGroups", label: "After groups", projected: true },
+  { id: "afterR32", label: "After R32", projected: true },
+  { id: "afterR16", label: "After R16", projected: true },
+  { id: "afterQF", label: "After QF", projected: true },
+  { id: "afterSF", label: "After SF", projected: true },
+  { id: "fullProjection", label: "Full tournament", projected: true },
 ];

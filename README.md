@@ -118,17 +118,18 @@ in with the model's modal outcome (`src/lib/selectors.js`,
 most-likely conditional score):
 
 - **Pre-tournament** — the real results as entered, nothing synthesized.
-- **After group stage (projected)** — only the group matches are filled in.
-- **Full tournament (projected)** — group matches are filled in, then each
-  newly-decidable knockout match is resolved (via `buildKnockoutResolution`,
-  the same standings/best-thirds/Annex-C logic the real bracket view uses)
-  and given its own synthesized score, propagating round by round until the
-  whole bracket — all 103 matches — has a result.
+- **After groups** — only the 72 group matches are filled in; the knockout
+  bracket shows advancement probabilities from the simulation.
+- **After R32 / After R16 / After QF / After SF** — group matches filled in,
+  then knockout matches resolved and synthesized stage-by-stage up to and
+  including that round (via `buildKnockoutResolution`); later rounds still
+  show advancement probabilities from the simulation.
+- **Full tournament** — all 103 matches synthesized (group stage + all five
+  knockout rounds, R32 through Final).
 
 These are explicitly illustrative, never forecasts: chaining "most likely"
-picks through six knockout rounds compounds to one low-probability path
-through the bracket, not a prediction of what will happen (see the in-app
-"Start point" caption).
+picks round by round compounds to one low-probability path through the
+bracket, not a prediction of what will happen (see the in-app caption).
 
 Synthesizing a *complete* bracket needs every tie broken — including
 cross-group best-thirds ties that, with everyone's score fixed at their modal
@@ -138,10 +139,9 @@ undecided lots draw isn't "concretely known yet" — `resolveGroupStandings`'s
 double-seed agreement check), but a projection has no "wait and see": every
 match needs two named teams. So `buildKnockoutResolution` takes an optional
 `{ tieBreakSeed }` that commits to a single, fixed, reproducible draw of lots
-instead of demanding two random seeds agree — `synthesizeFullTournamentResults`
-and the "Full tournament" bracket view both pass the same
-`PROJECTION_TIE_BREAK_SEED` so the teams a score was synthesized for are
-exactly the teams the bracket displays it between.
+instead of demanding two random seeds agree — all projected start points and
+their bracket views pass the same `PROJECTION_TIE_BREAK_SEED` so the teams a
+score was synthesized for are exactly the teams the bracket displays it between.
 
 The knockout bracket also shows, for each not-yet-decided slot, which teams
 the simulation actually has reaching it and how often (`slotAdvancement` in

@@ -63,7 +63,7 @@ export function FixturesPanel({ teams, fixtures, results, predictions, knockoutR
     }
     return Object.keys(byGroup)
       .sort()
-      .map((g) => ({ title: `Group ${g}`, rows: byGroup[g] }));
+      .map((g) => ({ id: `fixtures-group-${g}`, title: `Group ${g}`, rows: byGroup[g] }));
   }, [fixtures, predictionById, teamsByCode]);
 
   const knockoutSections = useMemo(() => {
@@ -89,9 +89,23 @@ export function FixturesPanel({ teams, fixtures, results, predictions, knockoutR
         </button>
       </div>
 
+      {tab === "group" && (
+        <div className={styles.groupNav}>
+          {groupSections.map((s) => (
+            <button
+              key={s.id}
+              className={styles.groupNavItem}
+              onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            >
+              {s.title.replace("Group ", "")}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className={tab === "group" ? styles.groupGrid : ""}>
         {sections.map((s) => (
-          <FixtureGroup key={s.title} title={s.title} rows={s.rows} teamsByCode={teamsByCode} />
+          <FixtureGroup key={s.title} id={s.id} title={s.title} rows={s.rows} teamsByCode={teamsByCode} />
         ))}
       </div>
     </div>

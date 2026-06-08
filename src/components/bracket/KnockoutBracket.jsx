@@ -101,7 +101,6 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
             <div className={styles.matches}>
               {matches.map((m) => (
                 <div className={styles.match} key={m.id}>
-                  <span className={styles.matchId}>{m.id}</span>
                   <BracketSlot {...m.home} teamsByCode={teamsByCode} />
                   <BracketSlot {...m.away} teamsByCode={teamsByCode} />
                   {m.projected && (

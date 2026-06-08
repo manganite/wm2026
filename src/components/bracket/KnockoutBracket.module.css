@@ -41,13 +41,6 @@
   overflow: hidden;
 }
 
-.matchId {
-  display: block;
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text-muted);
-  padding: 4px 10px 0;
-}
 
 .slot {
   display: flex;
