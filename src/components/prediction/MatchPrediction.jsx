@@ -79,15 +79,6 @@ export function MatchPrediction({ prediction, homeCode, awayCode }) {
         </span>
       </div>
 
-      <p className={styles.caption}>
-        "By outcome" scores are conditional — e.g. "{home} win → 2:1, 19% of those" means
-        2:1 is the likeliest scoreline <em>given</em> a {home} win, not how likely a {home} win
-        itself is (that's what Tendency shows). The single overall modal scoreline ("Top 3"'s
-        leader) is often the draw even for a clear favourite — summed across the long tail of
-        winning scorelines (2-0, 2-1, 3-1…), the favourite's win probability is still higher.
-        Tournament-wide advancement and title odds come from the full distribution over all
-        simulated runs, not from any single match's prediction.
-      </p>
     </div>
   );
 }

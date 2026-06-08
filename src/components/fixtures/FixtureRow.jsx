@@ -41,7 +41,7 @@ export function FixtureRow({ row, teamsByCode }) {
             </span>
           </>
         ) : !prediction ? (
-          <span className={styles.tbd}>Participants not yet determined — shown as probabilities elsewhere</span>
+          <span className={styles.tbd}>Participants not yet determined</span>
         ) : null}
       </div>
 

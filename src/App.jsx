@@ -180,6 +180,16 @@ export default function App() {
 
           <section className="section">
             <h2>Fixtures</h2>
+            <p className="muted">
+              Each unplayed match shows its prediction: Tendency (win/draw/win probabilities), the
+              likeliest score <em>conditional on</em> each outcome — "home win → 2:1, 19% of those"
+              means 2:1 is the likeliest scoreline <em>given</em> a home win, not how likely that
+              win itself is (Tendency answers that) — the overall top-3 scorelines, and expected
+              goals. The single most-likely overall scoreline is often the draw even for a clear
+              favourite, since the long tail of winning scorelines (2-0, 2-1, 3-1, …) outweighs
+              any one draw cell; advancement and title odds come from the full distribution over
+              all simulated runs, not any single match's prediction.
+            </p>
             <FixturesPanel
               teams={teams}
               fixtures={fixtures}
