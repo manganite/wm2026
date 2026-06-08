@@ -128,7 +128,7 @@ table {
 .prob-bar {
   position: relative;
   display: inline-block;
-  height: 1em;
+  height: 1.5em;
   min-width: 56px;
   background: var(--accent-bg);
   border-radius: 3px;
@@ -149,7 +149,7 @@ table {
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   padding: 0 6px;
-  line-height: 1em;
+  line-height: 1.5em;
   white-space: nowrap;
 }
 
