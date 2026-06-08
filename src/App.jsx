@@ -78,7 +78,7 @@ export default function App() {
         ? buildKnockoutResolution(
             data,
             simResults,
-            startPoint === "fullProjection" ? { tieBreakSeed: PROJECTION_TIE_BREAK_SEED } : undefined
+            startPoint !== "pretournament" ? { tieBreakSeed: PROJECTION_TIE_BREAK_SEED } : undefined
           )
         : null,
     [data, simResults, startPoint]
