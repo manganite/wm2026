@@ -1,0 +1,31 @@
+{
+  "_comment": "Outright-winner odds for the 2026 FIFA World Cup, as posted by FanDuel Sportsbook and reported by Fox Sports (https://www.foxsports.com/stories/soccer/world-cup-2026-champion-odds), captured 2026-06-07 (article dated 2026-06-02, updated 2026-06-04). American/moneyline odds as quoted — verify.mjs converts each to an implied probability (100/(odds+100) for the positive odds seen here; -odds/(-odds+100) for negative/odds-on prices) and removes the bookmaker overround by normalising so they sum to 1, before comparing against the model. Like the Elo feed in teams.json, this is a snapshot, not a live feed: odds drift constantly with squad news, market sentiment and proximity to kickoff, so re-capture before relying on a comparison for a date far from the one recorded here. Only the ~21 teams FanDuel actually quotes outright odds for are listed; the other 27 are priced by the market as too unlikely to bother quoting individually.",
+  "market": "outright winner",
+  "source": "FanDuel Sportsbook (via Fox Sports)",
+  "url": "https://www.foxsports.com/stories/soccer/world-cup-2026-champion-odds",
+  "capturedAt": "2026-06-07",
+  "oddsFormat": "american",
+  "odds": {
+    "ESP": 475,
+    "FRA": 500,
+    "ENG": 650,
+    "BRA": 850,
+    "ARG": 900,
+    "POR": 1000,
+    "GER": 1400,
+    "NED": 2200,
+    "NOR": 3500,
+    "BEL": 3500,
+    "COL": 4000,
+    "MAR": 5000,
+    "URU": 5000,
+    "USA": 6000,
+    "SUI": 6500,
+    "JPN": 6500,
+    "MEX": 8000,
+    "CRO": 8000,
+    "ECU": 8000,
+    "SEN": 9000,
+    "SWE": 10000
+  }
+}

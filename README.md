@@ -24,6 +24,30 @@ node verify.mjs
 Expected: title probs sum to ~1.0, R32 probs sum to ~32, stage probs monotone,
 favourites (Spain, Argentina, France, England, Brazil) on top.
 
+It also runs a **calibration check** against a captured snapshot of bookmaker
+outright-winner odds (`data/odds.json`, present only if you've added one — see
+its `_comment` for the source/date and how to recreate it; the check
+self-skips with a one-line note if the file is absent). It converts the odds
+to overround-free implied probabilities and prints them side-by-side with the
+model's title probabilities, plus a Spearman rank correlation (agreement on
+*who's more likely than whom* — the meaningful comparison, since the model
+isn't tuned to match bookmakers) and the mean absolute difference in
+percentage points. This is a **plausibility signal, not a scoring rule** —
+both sides are snapshots that drift (the Elo feed and bookmaker odds alike),
+so treat it as a periodic sense-check, not a pass/fail gate.
+
+The snapshot captured 2026-06-07 (FanDuel, via Fox Sports — see
+`data/odds.json`) showed broad agreement: Spearman ρ ≈ 0.80 across the 21
+teams bookmakers quote outright odds for, mean absolute difference ≈ 2.5
+percentage points. The largest gaps were the model rating Spain and Argentina
+noticeably *higher* than the market (+10pp and +9pp) and England, Brazil and
+Germany somewhat *lower* (−5, −5, −4pp) — plausibly because Elo (this model's
+only signal) and bookmaker prices weigh different things (squad news, market
+sentiment, historical tournament pedigree) — and the model giving the USA and
+Sweden ~0% versus the market's ~1%, the kind of long-tail disagreement a
+goals-only Elo-driven model will always have with markets that price in more
+than results.
+
 ## Match model
 
 Goals are Poisson-distributed with a Dixon-Coles low-score correction.
@@ -158,7 +182,3 @@ and add a Pages deploy workflow. For a project page, set the Vite `base` to
   not a stand-in for those rules. `pickBestThirds` mirrors the same idea for
   the simpler (head-to-head-free) best-thirds chain.
 
-**Still approximate / open for refinement:**
-
-1. **Calibration**: compare title probabilities against bookmaker odds and
-   back-test before trusting the numbers.
