@@ -9,8 +9,8 @@
 .round {
   display: flex;
   flex-direction: column;
-  flex: none;
-  min-width: 220px;
+  flex: 1;
+  min-width: 160px;
 }
 
 .roundTitle {
