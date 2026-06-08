@@ -16,11 +16,18 @@ const STAGE_TITLES = {
 const fmtScore = ([h, a]) => `${h}:${a}`;
 const fmtPct = (p) => `${(p * 100).toFixed(0)}%`;
 
-function buildMatch(fixture, results, resolution, eloOf, teamsByCode) {
+// Up to this many candidates are shown per unfilled slot — narrow bracket
+// columns have no room for a long tail, and low-probability entries don't
+// change the picture ("who's actually in contention for this slot").
+const MAX_ADVANCEMENT_CANDIDATES = 4;
+
+function buildMatch(fixture, results, resolution, eloOf, teamsByCode, slotAdvancement) {
   const slot = resolution.get(fixture.id);
   const homeCode = slot?.home ?? null;
   const awayCode = slot?.away ?? null;
   const labelFor = (code, ref) => (code ? teamsByCode[code]?.name ?? code : describeRef(ref));
+  const advancementFor = (code, side) =>
+    code ? null : slotAdvancement?.[`${fixture.id}:${side}`]?.slice(0, MAX_ADVANCEMENT_CANDIDATES) ?? null;
   const played = results.matches[fixture.id];
   const winnerSide = matchWinnerSide(played, homeCode, awayCode);
 
@@ -40,12 +47,14 @@ function buildMatch(fixture, results, resolution, eloOf, teamsByCode) {
       label: labelFor(homeCode, fixture.home),
       score: played ? played[0] : null,
       isWinner: winnerSide === "home",
+      advancement: advancementFor(homeCode, "home"),
     },
     away: {
       code: awayCode,
       label: labelFor(awayCode, fixture.away),
       score: played ? played[1] : null,
       isWinner: winnerSide === "away",
+      advancement: advancementFor(awayCode, "away"),
     },
     projected,
   };
@@ -60,7 +69,7 @@ function buildMatch(fixture, results, resolution, eloOf, teamsByCode) {
 // now-exported standings/shootout logic). Slots whose occupant isn't
 // concretely known yet show only their description ("Group A winner", "Best
 // 3rd (A/B/C/D/F)") — never a fabricated team or score.
-export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, eloOf }) {
+export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, eloOf, slotAdvancement }) {
   const teamsByCode = useMemo(() => Object.fromEntries(teams.map((t) => [t.code, t])), [teams]);
 
   const rounds = useMemo(() => {
@@ -68,9 +77,11 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
     for (const m of fixtures.knockout) (byStage[m.stage] ??= []).push(m);
     return STAGES.filter((s) => byStage[s]).map((stage) => ({
       stage,
-      matches: byStage[stage].map((m) => buildMatch(m, results, knockoutResolution, eloOf, teamsByCode)),
+      matches: byStage[stage].map((m) =>
+        buildMatch(m, results, knockoutResolution, eloOf, teamsByCode, slotAdvancement)
+      ),
     }));
-  }, [fixtures, results, knockoutResolution, eloOf, teamsByCode]);
+  }, [fixtures, results, knockoutResolution, eloOf, teamsByCode, slotAdvancement]);
 
   return (
     <div>
@@ -99,8 +110,11 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
         "Projected" scorelines are the model's single most-likely outcome for matches whose two
         sides are now concretely known — shown with their probability so they read as a guess, not
         a result. The full win/draw/tendency and xG breakdown for the same matches is in Fixtures
-        → Knockout stage. Slots still labelled by description (e.g. "Group A winner") remain split
-        across several teams — the bracket only fills them in once results or shootouts decide it.
+        → Knockout stage. Slots still labelled by description (e.g. "Group A winner") show, beneath
+        it, which teams the simulation actually has reaching that slot and how often — the
+        advancement probabilities feeding it, straight from the full run distribution, not a guess
+        at a single occupant. The bracket only fills the slot itself in once results or shootouts
+        concretely decide it.
       </p>
     </div>
   );

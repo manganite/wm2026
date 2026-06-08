@@ -51,9 +51,8 @@
 
 .slot {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
   padding: 5px 10px;
   font-size: 13px;
 }
@@ -67,6 +66,13 @@
   background: var(--win-bg);
 }
 
+.slotRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .slotName {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -77,6 +83,33 @@
   font-family: var(--mono);
   font-weight: 700;
   color: var(--text-heading);
+}
+
+/* Per-slot "advancement probabilities" — which teams the simulation has
+   reaching an unfilled slot, and how often (brief: "unfilled slots show the
+   advancement probabilities feeding them"). */
+.advancement {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.advancementRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.advancementName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .projection {

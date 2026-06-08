@@ -300,14 +300,22 @@ export function simulateTournament(ctx, rng) {
     }
   }
 
+  // record which team fills every slot ({win}/{run}/{w}/{t} alike) this run —
+  // tallied by runMonteCarlo into per-slot "advancement probabilities" for the
+  // bracket UI (see buildContext: every ref carries a stable `_slotId`). Must
+  // happen inside this loop, in fixtures.knockout's dependency order: a {w}
+  // ref's resolution depends on resultWinner entries set by earlier matches.
+  const slotFills = {};
   for (const m of knockout) {
     const home = resolveRef(m.home), away = resolveRef(m.away);
+    slotFills[m.home._slotId] = home;
+    slotFills[m.away._slotId] = away;
     const w = knockoutWinner(home, away, eloOf, matrices, results, m.id, rng);
     resultWinner[m.id] = w;
     const nextStage = { R32: STAGE.R16, R16: STAGE.QF, QF: STAGE.SF, SF: STAGE.F, F: STAGE.W }[m.stage];
     reached[w] = Math.max(reached[w] || 0, nextStage);
   }
-  return { reached, champion: resultWinner["F"] };
+  return { reached, champion: resultWinner["F"], slotFills };
 }
 
 // ---- context builder (precompute matrices once) -----------------------------
@@ -345,19 +353,22 @@ export function buildContext(data, results, params = PARAMS) {
     koET: (h, a) => koMatrix(h, a, params.ET_FACTOR),
   };
 
-  // slot defs: give each t-ref a stable slotId derived from its allowed set + match.
-  // `fixedWinner` is the group letter of the fixed group-winner this slot faces
-  // (the official R32 schedule always pairs a Best-3rd slot against a group
-  // winner on the other side of the same match) — the key Annex C looks up by.
+  // Every knockout-match side gets a stable slotId ("<matchId>:<side>"),
+  // regardless of ref kind ({win}/{run}/{w}/{t}) — used both to look up the
+  // Annex C best-thirds placement (t-refs only, via slotDefs/fixedWinner) and,
+  // more generally, to tally "which team ends up filling this slot" across MC
+  // runs (every ref kind) for the UI's per-slot advancement-probability display.
+  // `fixedWinner` is the group letter of the fixed group-winner a Best-3rd slot
+  // faces (the official R32 schedule always pairs one against the other side of
+  // the same match) — the key Annex C looks up by.
   const slotDefs = [];
   for (const m of data.fixtures.knockout) {
     for (const side of ["home", "away"]) {
       const ref = m[side];
+      ref._slotId = m.id + ":" + side;
       if (ref.t) {
         const other = m[side === "home" ? "away" : "home"];
-        const slotId = m.id + ":" + side;
-        ref._slotId = slotId;
-        slotDefs.push({ slotId, allowed: ref.t, fixedWinner: other.win });
+        slotDefs.push({ slotId: ref._slotId, allowed: ref.t, fixedWinner: other.win });
       }
     }
   }
@@ -377,8 +388,12 @@ export function runMonteCarlo(data, results, N = 20000, seed = 12345) {
   const tally = {};
   for (const t of ctx.teams) tally[t.code] = { R32: 0, R16: 0, QF: 0, SF: 0, F: 0, W: 0 };
 
+  // slotTally[slotId][code] = how many runs that team filled that bracket slot
+  // — the raw material for "advancement probabilities feeding unfilled slots".
+  const slotTally = {};
+
   for (let i = 0; i < N; i++) {
-    const { reached, champion } = simulateTournament(ctx, rng);
+    const { reached, slotFills } = simulateTournament(ctx, rng);
     for (const code in reached) {
       if (!tally[code]) continue; // defensive: skip any unresolved ref
       const r = reached[code];
@@ -389,6 +404,12 @@ export function runMonteCarlo(data, results, N = 20000, seed = 12345) {
       if (r >= 5) tally[code].F++;
       if (r >= 6) tally[code].W++;
     }
+    for (const slotId in slotFills) {
+      const code = slotFills[slotId];
+      if (!code) continue;
+      const bucket = (slotTally[slotId] ??= {});
+      bucket[code] = (bucket[code] || 0) + 1;
+    }
   }
 
   const probs = {};
@@ -397,10 +418,23 @@ export function runMonteCarlo(data, results, N = 20000, seed = 12345) {
     for (const s of STAGES) probs[code][s] = tally[code][s] / N;
   }
 
+  // slotAdvancement[slotId] = [{ code, prob }, ...] sorted high -> low, for
+  // every knockout-match side — "the advancement probabilities feeding" each
+  // bracket slot (brief: unfilled slots should show these). Slots whose match
+  // is already played collapse to ~100% for the real participant, since
+  // resolveRef/knockoutWinner short-circuit to `results` every run.
+  const slotAdvancement = {};
+  for (const slotId in slotTally) {
+    const bucket = slotTally[slotId];
+    slotAdvancement[slotId] = Object.entries(bucket)
+      .map(([code, count]) => ({ code, prob: count / N }))
+      .sort((a, b) => b.prob - a.prob);
+  }
+
   // analytic per-match predictions for fixtures whose participants are known now
   const predictions = predictKnownMatches(data, results, ctx, params);
 
-  return { N, probs, predictions };
+  return { N, probs, predictions, slotAdvancement };
 }
 
 // Predict every match whose two teams are currently determined

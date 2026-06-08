@@ -20,9 +20,23 @@ import {
 // duplicating the comparator: run simulateGroup with two different seeds and
 // check the resulting order agrees — if the RNG fallback were exercised, two
 // different seeds would (almost certainly) disagree.
-function resolveGroupStandings(ctx, group, results) {
+//
+// `tieBreakSeed`, when given, skips that agreement check and commits to a
+// single run's order instead — for hypothetical *projections* (see
+// lib/selectors.js's synthesizeFullTournamentResults), where there's no "wait
+// and see": resolving a tie via one fixed, reproducible lots draw is exactly
+// as legitimate a modelling choice as picking a match's modal score, and the
+// engine already treats lots-drawing as a first-class randomized procedure
+// (simulateGroup/pickBestThirds take an `rng` for precisely this). The real
+// (results-driven) bracket view never passes this — it must stay honest about
+// what the actual tournament has and hasn't yet decided.
+function resolveGroupStandings(ctx, group, results, tieBreakSeed) {
   const matches = ctx.matrices.group[group];
   if (!matches.every((m) => results.matches[m.id])) return null;
+
+  if (tieBreakSeed != null) {
+    return simulateGroup(group, ctx.teamsByGroup, ctx.matrices, results, makeRng(tieBreakSeed));
+  }
 
   const a = simulateGroup(group, ctx.teamsByGroup, ctx.matrices, results, makeRng(1));
   const b = simulateGroup(group, ctx.teamsByGroup, ctx.matrices, results, makeRng(2));
@@ -31,12 +45,15 @@ function resolveGroupStandings(ctx, group, results) {
 }
 
 // Returns Map<matchId, { home: code|null, away: code|null, bothKnown }>
-export function buildKnockoutResolution(data, results) {
+// `tieBreakSeed`: see resolveGroupStandings — propagated to both the group
+// and best-thirds tie-breaks so a projection commits to one coherent draw of
+// lots throughout, rather than stalling at the first genuine tie.
+export function buildKnockoutResolution(data, results, { tieBreakSeed } = {}) {
   const ctx = buildContext(data, results, PARAMS);
   const { groups, slotDefs } = ctx;
 
   const standings = {};
-  for (const g of groups) standings[g] = resolveGroupStandings(ctx, g, results);
+  for (const g of groups) standings[g] = resolveGroupStandings(ctx, g, results, tieBreakSeed);
 
   const winners = {};
   const runners = {};
@@ -51,13 +68,19 @@ export function buildKnockoutResolution(data, results) {
 
   // Best-thirds slots need ALL groups resolved (qualification compares thirds
   // across every group) and, again, no RNG-fallback tie at the qualification
-  // boundary — same double-seed determinism check.
+  // boundary — same double-seed determinism check (or the same single-seed
+  // commitment when projecting).
   let thirdAssign = null;
   if (groups.every((g) => standings[g])) {
-    const bestA = pickBestThirds(thirdsRows, makeRng(1));
-    const bestB = pickBestThirds(thirdsRows, makeRng(2));
-    const sameQualifiers = bestA.every((t, i) => t.group === bestB[i].group);
-    if (sameQualifiers) thirdAssign = assignThirds(bestA, slotDefs);
+    if (tieBreakSeed != null) {
+      const best = pickBestThirds(thirdsRows, makeRng(tieBreakSeed));
+      thirdAssign = assignThirds(best, slotDefs);
+    } else {
+      const bestA = pickBestThirds(thirdsRows, makeRng(1));
+      const bestB = pickBestThirds(thirdsRows, makeRng(2));
+      const sameQualifiers = bestA.every((t, i) => t.group === bestB[i].group);
+      if (sameQualifiers) thirdAssign = assignThirds(bestA, slotDefs);
+    }
   }
 
   function resolveRef(ref) {

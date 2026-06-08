@@ -5,7 +5,9 @@ import { useEffect, useRef, useState } from "react";
 // in-flight response that's no longer the latest request (e.g. the user
 // dragged the N slider past several values quickly).
 export function useSimulation({ data, results, N, seed }) {
-  const [state, setState] = useState({ status: "idle", probs: null, predictions: null, error: null });
+  const [state, setState] = useState({
+    status: "idle", probs: null, predictions: null, slotAdvancement: null, error: null,
+  });
   const workerRef = useRef(null);
   const requestIdRef = useRef(0);
 
@@ -18,9 +20,12 @@ export function useSimulation({ data, results, N, seed }) {
       if (requestId !== requestIdRef.current) return; // stale response — ignore
 
       if (type === "DONE") {
-        setState({ status: "done", probs: payload.probs, predictions: payload.predictions, error: null });
+        setState({
+          status: "done", probs: payload.probs, predictions: payload.predictions,
+          slotAdvancement: payload.slotAdvancement, error: null,
+        });
       } else if (type === "ERROR") {
-        setState({ status: "error", probs: null, predictions: null, error: payload.message });
+        setState({ status: "error", probs: null, predictions: null, slotAdvancement: null, error: payload.message });
       }
     };
 

@@ -4,7 +4,11 @@ import { DEFAULT_RUNS, DEFAULT_SEED } from "./config.js";
 import { useTournamentData } from "./hooks/useTournamentData.js";
 import { useSimulation } from "./hooks/useSimulation.js";
 import { buildKnockoutResolution, deriveTournamentProgress } from "./lib/bracket.js";
-import { synthesizeGroupStageResults } from "./lib/selectors.js";
+import {
+  synthesizeGroupStageResults,
+  synthesizeFullTournamentResults,
+  PROJECTION_TIE_BREAK_SEED,
+} from "./lib/selectors.js";
 import { computeAccuracy } from "./lib/accuracy.js";
 
 import { LoadingState, ErrorBanner } from "./components/common/LoadingState.jsx";
@@ -35,30 +39,48 @@ export default function App() {
   const teams = teamsFile?.teams ?? null;
   const data = useMemo(() => (teamsFile && fixtures ? { teams: teamsFile, fixtures } : null), [teamsFile, fixtures]);
 
-  // Pre-tournament baseline: analytic (Elo -> Poisson/DC via predictMatch),
-  // exact and independent of N. Doubles as (a) the source of "most likely"
-  // group scores for the projected start point, and (b) the fixed scoring
-  // reference for the accuracy readout — see lib/selectors.js and lib/accuracy.js.
-  const baseline = useMemo(() => {
-    if (!data) return null;
-    const ctx = buildContext(data, EMPTY_RESULTS, PARAMS);
-    return predictKnownMatches(data, EMPTY_RESULTS, ctx, PARAMS);
-  }, [data]);
+  // Pre-tournament context + baseline: analytic (Elo -> Poisson/DC via
+  // predictMatch), exact and independent of N. Elo doesn't depend on results,
+  // so this context's `eloOf` stays valid for projecting knockout matches too.
+  // Together they're (a) the source of "most likely" scores for the projected
+  // start points, and (b) the fixed scoring reference for the accuracy
+  // readout — see lib/selectors.js and lib/accuracy.js.
+  const baselineCtx = useMemo(() => (data ? buildContext(data, EMPTY_RESULTS, PARAMS) : null), [data]);
+  const baseline = useMemo(
+    () => (data && baselineCtx ? predictKnownMatches(data, EMPTY_RESULTS, baselineCtx, PARAMS) : null),
+    [data, baselineCtx]
+  );
 
   // The results object actually fed to the simulation: real results, or — for
-  // the "after group stage (projected)" start point — real results with every
-  // still-unplayed group match filled in by the model's modal scoreline.
+  // the projected start points — real results with undecided matches filled
+  // in by the model's most-likely outcome (group stage only, or propagated
+  // all the way through the bracket — see lib/selectors.js).
   const simResults = useMemo(() => {
     if (!results) return null;
     if (startPoint === "groups" && baseline) return synthesizeGroupStageResults(results, baseline);
+    if (startPoint === "fullProjection" && baseline && baselineCtx) {
+      return synthesizeFullTournamentResults(data, results, baseline, baselineCtx, PARAMS);
+    }
     return results;
-  }, [results, startPoint, baseline]);
+  }, [results, startPoint, baseline, baselineCtx, data]);
 
   const sim = useSimulation({ data, results: simResults, N: runs, seed: DEFAULT_SEED });
 
+  // Mirror the tie-break commitment synthesizeFullTournamentResults made
+  // internally: that's the only way every synthesized knockout score ends up
+  // attached to the same two teams the bracket displays for it. The real
+  // (results-driven) views keep strict double-seed agreement — they must stay
+  // honest about what the actual tournament has, and hasn't, decided yet.
   const knockoutResolution = useMemo(
-    () => (data && simResults ? buildKnockoutResolution(data, simResults) : null),
-    [data, simResults]
+    () =>
+      data && simResults
+        ? buildKnockoutResolution(
+            data,
+            simResults,
+            startPoint === "fullProjection" ? { tieBreakSeed: PROJECTION_TIE_BREAK_SEED } : undefined
+          )
+        : null,
+    [data, simResults, startPoint]
   );
   const eloOf = useMemo(
     () => (data && simResults ? buildContext(data, simResults, PARAMS).eloOf : null),
@@ -109,16 +131,18 @@ export default function App() {
           A Monte-Carlo simulation of the 2026 World Cup, run live in your browser and
           re-conditioned on the actual results as they come in — not a fixed, one-off forecast.
         </p>
-        {progress && <NowMarker progress={progress} />}
       </header>
 
       <section className="section">
         <h2>Start point</h2>
         <p className="muted">
           Simulate forward from the real results entered so far, or — purely for illustration —
-          from a projection where every undecided group match finishes with the model's current
-          single most-likely score. Real tournaments are not decided by modal scorelines; the
-          projection is clearly a hypothetical, not a forecast of what will actually happen.
+          from a projection where undecided matches are filled in with the model's most-likely
+          outcome: just the group stage, or propagated all the way through the bracket to a
+          complete, single hypothetical tournament. Real tournaments are not decided by modal
+          scorelines, and the further a projection reaches, the more these per-match guesses
+          compound — six rounds of "most likely" picks chained together is one low-probability
+          path through the bracket, not a forecast of what will actually happen.
         </p>
         <StartPointSelector value={startPoint} onChange={setStartPoint} />
       </section>
@@ -144,8 +168,11 @@ export default function App() {
             <h2>Progression — how far will each team go?</h2>
             <p className="muted">
               The top 12 teams by title probability, broken down by the stage their run is most
-              likely to end at.
+              likely to end at. The "now" marker below shows where the real tournament currently
+              stands — everything up to it is the actual entered results; everything beyond it,
+              including these bars, is the model's projection.
             </p>
+            {progress && <NowMarker progress={progress} />}
             <div className="card">
               <ProgressionChart teams={teams} probs={sim.probs} />
             </div>
@@ -171,6 +198,7 @@ export default function App() {
               results={simResults}
               knockoutResolution={knockoutResolution}
               eloOf={eloOf}
+              slotAdvancement={sim.slotAdvancement}
             />
           </section>
 

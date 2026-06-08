@@ -78,6 +78,47 @@ real results.
 To update during the tournament: edit `data/results.json`, commit, push.
 The deployed app fetches the file (raw GitHub URL or same-origin) and re-runs.
 
+## Start points & projections (UI)
+
+Beyond simulating from the real entered results, the app can also simulate
+forward from a hypothetical "start point" where undecided matches are filled
+in with the model's modal outcome (`src/lib/selectors.js`,
+`pickMostLikelyScore`: argmax of the tendency, then that outcome's
+most-likely conditional score):
+
+- **Pre-tournament** — the real results as entered, nothing synthesized.
+- **After group stage (projected)** — only the group matches are filled in.
+- **Full tournament (projected)** — group matches are filled in, then each
+  newly-decidable knockout match is resolved (via `buildKnockoutResolution`,
+  the same standings/best-thirds/Annex-C logic the real bracket view uses)
+  and given its own synthesized score, propagating round by round until the
+  whole bracket — all 103 matches — has a result.
+
+These are explicitly illustrative, never forecasts: chaining "most likely"
+picks through six knockout rounds compounds to one low-probability path
+through the bracket, not a prediction of what will happen (see the in-app
+"Start point" caption).
+
+Synthesizing a *complete* bracket needs every tie broken — including
+cross-group best-thirds ties that, with everyone's score fixed at their modal
+outcome, come up far more often than in real (or simulated-with-variance)
+tournaments. The real bracket view rightly refuses to call those (a genuine
+undecided lots draw isn't "concretely known yet" — `resolveGroupStandings`'s
+double-seed agreement check), but a projection has no "wait and see": every
+match needs two named teams. So `buildKnockoutResolution` takes an optional
+`{ tieBreakSeed }` that commits to a single, fixed, reproducible draw of lots
+instead of demanding two random seeds agree — `synthesizeFullTournamentResults`
+and the "Full tournament" bracket view both pass the same
+`PROJECTION_TIE_BREAK_SEED` so the teams a score was synthesized for are
+exactly the teams the bracket displays it between.
+
+The knockout bracket also shows, for each not-yet-decided slot, which teams
+the simulation actually has reaching it and how often (`slotAdvancement` in
+`runMonteCarlo`'s return — a tally, across every Monte-Carlo run, of which
+team fills each `{matchId}:{home|away}` slot). This works uniformly for
+every reference kind (group winner/runner-up/best-third/winner-of-match)
+since it just records what `simulateTournament` already resolves each run.
+
 ## Deployment (GitHub Pages)
 
 Static site → Pages fits directly, no backend. Build the UI (e.g. Vite + React)
