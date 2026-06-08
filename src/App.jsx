@@ -12,6 +12,7 @@ import {
 import { computeAccuracy } from "./lib/accuracy.js";
 
 import { LoadingState, ErrorBanner } from "./components/common/LoadingState.jsx";
+import { GroupStandingsTables } from "./components/groups/GroupStandingsTables.jsx";
 import { TitleProbabilityTable } from "./components/outlook/TitleProbabilityTable.jsx";
 import { ProgressionChart } from "./components/outlook/ProgressionChart.jsx";
 import { FixturesPanel } from "./components/fixtures/FixturesPanel.jsx";
@@ -158,6 +159,23 @@ export default function App() {
               <TitleProbabilityTable teams={teams} probs={sim.probs} />
             </div>
           </section>
+
+          {startPoint !== "pretournament" && (
+            <section className="section">
+              <h2>Group standings (projected)</h2>
+              <p className="muted">
+                Group results filled in with the model's most-likely outcome for each unplayed match.
+                Green rows qualified directly (1st/2nd); blue rows qualified as best third-placed team.
+              </p>
+              <GroupStandingsTables
+                data={data}
+                simResults={simResults}
+                baselineCtx={baselineCtx}
+                knockoutResolution={knockoutResolution}
+                teams={teams}
+              />
+            </section>
+          )}
 
           <section className="section">
             <h2>Progression — how far will each team go?</h2>
