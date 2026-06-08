@@ -127,15 +127,24 @@ and add a Pages deploy workflow. For a project page, set the Vite `base` to
 
 ## Documented caveats (to refine for full fidelity)
 
-1. **Elo values are approximate seeds.** Replace with live eloratings.net values.
-2. **Best-thirds assignment** uses FIFA's official Annex C lookup table verbatim
-   (495 rows — one per possible combination of which 8 of the 12 groups produce
-   a qualifying third-placed team), extracted from the WC 26 Regulations and
-   verified for full, gap-free coverage of all C(12,8) combinations — see
-   `thirdPlaceAssignments.mjs`.
-3. **R16+ bracket adjacency** pairs consecutive R32 winners — a clean stand-in.
+**Resolved to FIFA's official rules:**
+
+- **Best-thirds assignment** uses FIFA's official Annex C lookup table verbatim
+  (495 rows — one per possible combination of which 8 of the 12 groups produce
+  a qualifying third-placed team), extracted from the WC 26 Regulations and
+  verified for full, gap-free coverage of all C(12,8) combinations — see
+  `thirdPlaceAssignments.mjs`.
+- **Elo values** are live World Football Elo ratings pulled from eloratings.net
+  (captured 2026-06-08 — see the `_comment` in `data/teams.json`). Ratings
+  drift after every match, including friendlies, so this is a snapshot rather
+  than a continuously-synced feed: re-capture before relying on the numbers for
+  a date far from the one recorded there.
+
+**Still approximate / open for refinement:**
+
+1. **R16+ bracket adjacency** pairs consecutive R32 winners — a clean stand-in.
    Swap in the official adjacency if the precise semifinal pairings matter.
-4. **Group tiebreakers** follow GD → GF → head-to-head → (random for fair-play /
+2. **Group tiebreakers** follow GD → GF → head-to-head → (random for fair-play /
    lots). Order is easy to change in `simulateGroup`.
-5. **Calibration**: compare title probabilities against bookmaker odds and
+3. **Calibration**: compare title probabilities against bookmaker odds and
    back-test before trusting the numbers.
