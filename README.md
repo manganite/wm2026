@@ -1,16 +1,23 @@
 # WC 2026 Monte-Carlo Simulation
 
-Client-side Monte-Carlo simulation of the 2026 FIFA World Cup. The engine is a
-pure-JS module (Node + browser). Played results are hand-maintained in one JSON
-file; everything not yet played is simulated. Built to be deployed as a static
-GitHub Pages site. **UI language: English.**
+**Live app: https://manganite.github.io/wm2026/**
+
+Client-side Monte-Carlo simulation of the 2026 FIFA World Cup — a tournament
+outlook (title/stage probabilities for all 48 teams), per-match predictions, a
+knockout bracket that fills in as real results land, and illustrative
+"start point" projections that play the whole bracket forward from today's
+most-likely outcomes. Everything runs in the browser, off the main thread.
+The engine itself is a pure-JS module (Node + browser); played results are
+hand-maintained in one JSON file and everything not yet played is simulated.
+Deployed as a static site on GitHub Pages. **UI language: English.**
 
 ## Repo layout
 
 ```
-data/teams.json      48 teams: code, name, group, confed, elo (approximate seeds)
+data/teams.json      48 teams: code, name, group, confed, elo (live ratings snapshot)
 data/fixtures.json   72 group matches (real schedule) + full knockout structure
 data/results.json    hand-edited played results: { matches: { "GE1": [3,0], ... } }
+data/odds.json       optional dev-only snapshot: bookmaker odds for the calibration check below
 engine.mjs           simulation engine (no DOM) — the verified core
 verify.mjs           Node script: runs the MC and checks plausibility
 ```
@@ -145,13 +152,22 @@ since it just records what `simulateTournament` already resolves each run.
 
 ## Deployment (GitHub Pages)
 
-Static site → Pages fits directly, no backend. Build the UI (e.g. Vite + React)
-and add a Pages deploy workflow. For a project page, set the Vite `base` to
-`/<repo>/`. Web Workers work on Pages, so the MC can run off the main thread.
+Live at **https://manganite.github.io/wm2026/** — a static site, no backend.
+`.github/workflows/deploy.yml` builds (`npm run build`, which runs
+`scripts/sync-data.mjs` to copy the browser-facing `data/*.json` into
+`public/data/` before the Vite build) and deploys via
+`actions/upload-pages-artifact` + `actions/deploy-pages` on every push to
+`main`. As a project page rather than a user/org page, `vite.config.js` sets
+`base: '/wm2026/'` — keep that, the repo name, and `src/config.js`'s
+`GITHUB_OWNER`/`GITHUB_REPO`/`RESULTS_RAW_URL` in sync if the repo ever moves.
+The Monte-Carlo runs in a Web Worker, so the UI stays responsive while it churns.
 
-## Documented caveats (to refine for full fidelity)
+## Fidelity to FIFA's official rules
 
-**Resolved to FIFA's official rules:**
+Four areas of the model that could easily have been left as simplifying
+stand-ins were instead matched to the official 2026 regulations and Annexes,
+and are documented here with their sources so the choice is checkable rather
+than assumed:
 
 - **Best-thirds assignment** uses FIFA's official Annex C lookup table verbatim
   (495 rows — one per possible combination of which 8 of the 12 groups produce
