@@ -10,3 +10,7 @@ export function LoadingState({ label = "Loading…" }) {
 export function ErrorBanner({ message }) {
   return <div className="error-banner">{message}</div>;
 }
+
+export function WarnBanner({ message }) {
+  return <div className="warn-banner">{message}</div>;
+}

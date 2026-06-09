@@ -199,3 +199,12 @@ table {
   padding: 10px 14px;
   font-size: 14px;
 }
+
+.warn-banner {
+  border: 1px solid var(--draw);
+  background: var(--draw-bg);
+  color: var(--draw);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { RESULTS_RAW_URL, RESULTS_POLL_INTERVAL_MS } from "../config.js";
+import { validateResults } from "../lib/validateResults.js";
 
 const dataUrl = (name) => `${import.meta.env.BASE_URL}data/${name}`;
 
@@ -25,7 +26,7 @@ async function loadResults() {
 // results.json on a poll (it changes as the tournament unfolds). Re-fetches
 // are compared by content so byte-identical polls don't trigger re-simulation.
 export function useTournamentData() {
-  const [state, setState] = useState({ status: "loading", teams: null, fixtures: null, results: null, error: null });
+  const [state, setState] = useState({ status: "loading", teams: null, fixtures: null, results: null, validationIssues: null, error: null });
   const lastResultsJson = useRef(null);
 
   useEffect(() => {
@@ -40,7 +41,8 @@ export function useTournamentData() {
         ]);
         if (cancelled) return;
         lastResultsJson.current = JSON.stringify(results);
-        setState({ status: "ready", teams, fixtures, results, error: null });
+        const validationIssues = validateResults(results, fixtures);
+        setState({ status: "ready", teams, fixtures, results, validationIssues, error: null });
       } catch (err) {
         if (!cancelled) setState((prev) => ({ ...prev, status: "error", error: err.message }));
       }
@@ -49,11 +51,14 @@ export function useTournamentData() {
 
     const poll = setInterval(async () => {
       try {
+        // Raw GitHub CDN can lag 1–5 min behind a push despite cache-busting —
+        // not a bug; the ?t= param only bypasses the browser cache, not GitHub's CDN.
         const results = await loadResults();
         const json = JSON.stringify(results);
         if (json !== lastResultsJson.current) {
           lastResultsJson.current = json;
-          setState((prev) => ({ ...prev, results }));
+          // Re-validate whenever results change
+          setState((prev) => ({ ...prev, results, validationIssues: validateResults(results, prev.fixtures) }));
         }
       } catch {
         // transient fetch failure — keep showing the last known results

@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 import { runMonteCarlo, predictMatch } from "./engine.mjs";
+import { ANNEX_C_ROWS, ANNEX_C_WINNERS } from "./thirdPlaceAssignments.mjs";
+import { validateResults } from "./src/lib/validateResults.js";
 
 const load = p => JSON.parse(readFileSync(new URL(p, import.meta.url)));
 const data = {
@@ -97,6 +99,99 @@ function ranksWithTies(codes, key) {
     i = j + 1;
   }
   return ranks;
+}
+
+// ---- structural assertions: Annex C + bracket tree ----
+// These are deterministic checks on the rules-encoding tables; they don't
+// depend on the simulation and must pass before any further output is trusted.
+{
+  let failures = 0;
+  function assert(cond, msg) {
+    if (cond) { console.log(`  ok   ${msg}`); }
+    else { console.error(`  FAIL ${msg}`); failures++; }
+  }
+
+  console.log("\n=== structural assertions ===");
+
+  // --- Annex C table (thirdPlaceAssignments.mjs) ---
+  const GROUPS = "ABCDEFGHIJKL".split("");
+  const validLetters = new Set(GROUPS);
+
+  assert(ANNEX_C_ROWS.length === 495, "Annex C: exactly 495 rows");
+
+  let rowErrors = 0;
+  for (const row of ANNEX_C_ROWS) {
+    if (row.length !== 8 || new Set(row.split("")).size !== 8 || [...row].some(c => !validLetters.has(c)))
+      rowErrors++;
+  }
+  assert(rowErrors === 0, "Annex C: every row has 8 distinct A-L letters");
+
+  // Full C(12,8) coverage — generate all combinations and diff
+  function* combinations(arr, k) {
+    if (k === 0) { yield []; return; }
+    for (let i = 0; i <= arr.length - k; i++)
+      for (const rest of combinations(arr.slice(i + 1), k - 1))
+        yield [arr[i], ...rest];
+  }
+  const expectedCombos = new Set();
+  for (const combo of combinations(GROUPS, 8)) expectedCombos.add(combo.join(""));
+  const actualCombos = new Set(ANNEX_C_ROWS.map(r => r.split("").sort().join("")));
+  assert(actualCombos.size === 495 && [...expectedCombos].every(c => actualCombos.has(c)),
+    "Annex C: covers all C(12,8) = 495 subsets of A-L, no gaps or duplicates");
+
+  let colConflicts = 0;
+  for (const row of ANNEX_C_ROWS)
+    for (let j = 0; j < ANNEX_C_WINNERS.length; j++)
+      if (row[j] === ANNEX_C_WINNERS[j]) colConflicts++;
+  assert(colConflicts === 0, "Annex C: no third-placed team assigned to face its own group's winner");
+
+  // --- Bracket tree (fixtures.json) ---
+  const byStage = {};
+  for (const m of data.fixtures.knockout) (byStage[m.stage] ??= []).push(m);
+
+  assert((byStage.R32 ?? []).length === 16, "Bracket: 16 R32 matches");
+  assert((byStage.R16 ?? []).length ===  8, "Bracket: 8 R16 matches");
+  assert((byStage.QF  ?? []).length ===  4, "Bracket: 4 QF matches");
+  assert((byStage.SF  ?? []).length ===  2, "Bracket: 2 SF matches");
+  assert((byStage.F   ?? []).length ===  1, "Bracket: 1 Final match");
+
+  // Each successive stage's slots must be {w: "<prev stage match id>"}
+  // pointing at IDs that actually exist in the feeder stage.
+  const feedCheck = [
+    ["R16", new Set((byStage.R32 ?? []).map(m => m.id)), "R32"],
+    ["QF",  new Set((byStage.R16 ?? []).map(m => m.id)), "R16"],
+    ["SF",  new Set((byStage.QF  ?? []).map(m => m.id)), "QF"],
+    ["F",   new Set((byStage.SF  ?? []).map(m => m.id)), "SF"],
+  ];
+  for (const [stage, feederIds, feederName] of feedCheck) {
+    let errs = 0;
+    for (const m of byStage[stage] ?? [])
+      for (const side of ["home", "away"])
+        if (!m[side].w || !feederIds.has(m[side].w)) errs++;
+    assert(errs === 0, `Bracket: all ${stage} slots are {w: valid-${feederName}-id}`);
+  }
+
+  if (failures > 0) {
+    console.error(`\n${failures} assertion(s) failed — fix before trusting simulation output.`);
+    process.exit(1);
+  }
+  console.log(`  (all assertions passed)`);
+}
+
+// ---- results.json validation ----
+{
+  const { errors, warnings } = validateResults(results, data.fixtures);
+  if (errors.length + warnings.length === 0) {
+    console.log("\n=== results.json validation ===\n  ok   no issues found");
+  } else {
+    console.log("\n=== results.json validation ===");
+    for (const msg of warnings) console.warn(`  WARN ${msg}`);
+    for (const msg of errors) console.error(`  ERR  ${msg}`);
+    if (errors.length > 0) {
+      console.error(`\n${errors.length} results.json error(s) — fix before trusting simulation output.`);
+      process.exit(1);
+    }
+  }
 }
 
 // ---- group A qualification ----

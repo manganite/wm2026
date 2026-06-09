@@ -11,7 +11,7 @@ import {
 } from "./lib/selectors.js";
 import { computeAccuracy } from "./lib/accuracy.js";
 
-import { LoadingState, ErrorBanner } from "./components/common/LoadingState.jsx";
+import { LoadingState, ErrorBanner, WarnBanner } from "./components/common/LoadingState.jsx";
 import { GroupStandingsTables } from "./components/groups/GroupStandingsTables.jsx";
 import { TitleProbabilityTable } from "./components/outlook/TitleProbabilityTable.jsx";
 import { ProgressionChart } from "./components/outlook/ProgressionChart.jsx";
@@ -30,7 +30,7 @@ const KNOCKOUT_STAGE_MAP = { afterR32: "R32", afterR16: "R16", afterQF: "QF", af
 // main UI sections. Deliberately thin — every non-trivial computation lives
 // in lib/* or the engine itself; this just wires data through to components.
 export default function App() {
-  const { status, teams: teamsFile, fixtures, results, error } = useTournamentData();
+  const { status, teams: teamsFile, fixtures, results, validationIssues, error } = useTournamentData();
   const [runs, setRuns] = useState(DEFAULT_RUNS);
   const [startPoint, setStartPoint] = useState("pretournament");
 
@@ -149,6 +149,12 @@ export default function App() {
         )}
         {simRunning && <LoadingState label={`Running ${runs.toLocaleString()} simulated tournaments…`} />}
         {sim.status === "error" && <ErrorBanner message={`Simulation failed: ${sim.error}`} />}
+        {validationIssues?.errors.map((msg, i) => (
+          <ErrorBanner key={i} message={`results.json error: ${msg}`} />
+        ))}
+        {validationIssues?.warnings.map((msg, i) => (
+          <WarnBanner key={i} message={`results.json warning: ${msg}`} />
+        ))}
       </div>
 
       {sim.status === "done" && (

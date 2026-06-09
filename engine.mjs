@@ -15,6 +15,13 @@ export const PARAMS = {
   RHO: -0.06,           // Dixon-Coles dependence (negative => slightly more draws/low scores)
   MAX_GOALS: 10,        // truncation for the scoreline matrix
   ET_FACTOR: 1 / 3,     // extra-time = 1/3 of a match worth of goals
+  RATING_SIGMA: 100,    // std-dev of per-team-per-run Elo noise; regresses favourites toward
+                        // the field by representing unknown-true-strength uncertainty.
+                        // Applied only in MC sampling — never in predictMatch (display) or when
+                        // a real result conditions a match. Tuned via scripts/calibrate.mjs:
+                        // σ=100 halves Spain/Argentina overconfidence vs. market (~10pp→~6pp)
+                        // while keeping Spearman ρ ≈ 0.83. Re-run calibrate.mjs after any
+                        // Elo update to check if this value needs adjusting.
 };
 
 // ---- seedable RNG (mulberry32) ---------------------------------------------
@@ -26,6 +33,14 @@ export function makeRng(seed) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+// Box-Muller transform: two uniform samples → one standard-normal draw.
+// `u` avoids log(0) since rng() theoretically returns 0 for seed state 0.
+function gaussianSample(rng) {
+  const u = 1 - rng();
+  const v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
 // ---- Poisson + Dixon-Coles --------------------------------------------------
@@ -339,8 +354,34 @@ function knockoutWinner(homeCode, awayCode, eloOf, matrices, results, matchId, r
 }
 
 // ---- one full tournament ----------------------------------------------------
-export function simulateTournament(ctx, rng) {
-  const { groups, teamsByGroup, matrices, results, knockout, slotDefs, eloOf } = ctx;
+
+// Builds a complete matrices object (group + ko + koET) from a given eloOf map,
+// without caching. Used per-run when RATING_SIGMA > 0 to ensure each simulation
+// run uses its own perturbed Elo values throughout — both group stage and knockout.
+function buildNoisyMatrices(groupStageFixtures, noisyEloOf, params) {
+  const groupMatrices = {};
+  for (const m of groupStageFixtures) {
+    if (!groupMatrices[m.group]) groupMatrices[m.group] = [];
+    const { lamH, lamA } = eloToLambdas(noisyEloOf[m.home], noisyEloOf[m.away], params);
+    groupMatrices[m.group].push({ ...m, sm: buildScoreMatrix(lamH, lamA, params) });
+  }
+  return {
+    group: groupMatrices,
+    ko: (h, a) => {
+      const { lamH, lamA } = eloToLambdas(noisyEloOf[h], noisyEloOf[a], params);
+      return buildScoreMatrix(lamH, lamA, params);
+    },
+    koET: (h, a) => {
+      const { lamH, lamA } = eloToLambdas(noisyEloOf[h], noisyEloOf[a], params);
+      return buildScoreMatrix(lamH * params.ET_FACTOR, lamA * params.ET_FACTOR, params);
+    },
+  };
+}
+
+export function simulateTournament(ctx, rng, overrides = {}) {
+  const { groups, teamsByGroup, results, knockout, slotDefs } = ctx;
+  const eloOf = overrides.eloOf ?? ctx.eloOf;
+  const matrices = overrides.matrices ?? ctx.matrices;
   const standings = {};
   const winners = {}, runners = {}, thirds = [];
   for (const g of groups) {
@@ -469,6 +510,7 @@ export function runMonteCarlo(data, results, N = 20000, seed = 12345) {
   const ctx = buildContext(data, results, params);
   const rng = makeRng(seed);
   const STAGES = ["R32", "R16", "QF", "SF", "F", "W"]; // reached >= idx+1
+  const SIGMA = params.RATING_SIGMA || 0;
   const tally = {};
   for (const t of ctx.teams) tally[t.code] = { R32: 0, R16: 0, QF: 0, SF: 0, F: 0, W: 0 };
 
@@ -477,7 +519,15 @@ export function runMonteCarlo(data, results, N = 20000, seed = 12345) {
   const slotTally = {};
 
   for (let i = 0; i < N; i++) {
-    const { reached, slotFills } = simulateTournament(ctx, rng);
+    // Per-run Elo noise: one draw per team, consistent across group stage and
+    // knockout within the same run. Only active when RATING_SIGMA > 0.
+    let runOverrides;
+    if (SIGMA > 0) {
+      const noisyEloOf = {};
+      for (const code in ctx.eloOf) noisyEloOf[code] = ctx.eloOf[code] + gaussianSample(rng) * SIGMA;
+      runOverrides = { eloOf: noisyEloOf, matrices: buildNoisyMatrices(data.fixtures.groupStage, noisyEloOf, params) };
+    }
+    const { reached, slotFills } = simulateTournament(ctx, rng, runOverrides);
     for (const code in reached) {
       if (!tally[code]) continue; // defensive: skip any unresolved ref
       const r = reached[code];
