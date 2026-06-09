@@ -31,13 +31,38 @@
   height: 100%;
 }
 
+.footer {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  justify-content: space-between;
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 14px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.expandBtn {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.expandBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .legendItem {

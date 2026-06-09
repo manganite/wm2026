@@ -205,9 +205,9 @@ for (const id of ["GE1", "GE6", "GH1", "GC1"]) {
   const m = predictions.find(x => x.id === id);
   const pr = m.prediction;
   const [h, a] = pr.mostLikely.score;
-  const top = pr.top3.map(t => `${t.score[0]}:${t.score[1]} (${(100 * t.prob).toFixed(0)}%)`).join(", ");
+  const top = pr.top5.slice(0, 3).map(t => `${t.score[0]}:${t.score[1]} (${(100 * t.prob).toFixed(0)}%)`).join(", ");
   console.log(`  ${id} ${teamName[m.home]} vs ${teamName[m.away]}`);
-  console.log(`     most likely ${h}:${a} (${(100 * pr.mostLikely.prob).toFixed(0)}%) | top3: ${top}`);
+  console.log(`     most likely ${h}:${a} (${(100 * pr.mostLikely.prob).toFixed(0)}%) | top3 of 5: ${top}`);
   console.log(`     tendency  H ${pct(pr.tendency.homeWin)}  D ${pct(pr.tendency.draw)}  A ${pct(pr.tendency.awayWin)}  | xG ${pr.expectedGoals[0].toFixed(2)}:${pr.expectedGoals[1].toFixed(2)}`);
 }
 

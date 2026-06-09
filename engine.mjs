@@ -137,7 +137,7 @@ export function predictMatch(eloH, eloA, params = PARAMS) {
       draw: { score: [bestD.h, bestD.a], prob: bestD.p / pD },
       awayWin: { score: [bestA.h, bestA.a], prob: bestA.p / pA },
     },
-    top3: cells.slice(0, 3).map(c => ({ score: [c.h, c.a], prob: c.p })),
+    top5: cells.slice(0, 5).map(c => ({ score: [c.h, c.a], prob: c.p })),
     tendency: { homeWin: pH, draw: pD, awayWin: pA },
     expectedGoals: [lamH, lamA],
   };

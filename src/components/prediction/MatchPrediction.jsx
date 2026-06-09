@@ -15,7 +15,7 @@ const fmtPct = (p) => `${(p * 100).toFixed(0)}%`;
 // over all win cells is larger). Showing "if X win, the likeliest score is…"
 // for each outcome avoids that single cell misleadingly dominating the view.
 export function MatchPrediction({ prediction, homeCode, awayCode }) {
-  const { mostLikelyByOutcome, top3, tendency, expectedGoals } = prediction;
+  const { mostLikelyByOutcome, top5, tendency, expectedGoals } = prediction;
   const home = homeCode || "Home";
   const away = awayCode || "Away";
 
@@ -61,9 +61,9 @@ export function MatchPrediction({ prediction, homeCode, awayCode }) {
       </div>
 
       <div className={styles.block}>
-        <div className={styles.label}>Top 3 scorelines</div>
+        <div className={styles.label}>Top 5 scorelines</div>
         <div className={styles.top3}>
-          {top3.map((t, i) => (
+          {top5.map((t, i) => (
             <div key={i}>
               {fmtScore(t.score)}
               <span>{fmtPct(t.prob)}</span>
