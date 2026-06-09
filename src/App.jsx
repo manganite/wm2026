@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { buildContext, predictKnownMatches, PARAMS } from "../engine.mjs";
-import { DEFAULT_RUNS, DEFAULT_SEED } from "./config.js";
+import { DEFAULT_RUNS, DEFAULT_SEED, GITHUB_OWNER, GITHUB_REPO } from "./config.js";
 import { useTournamentData } from "./hooks/useTournamentData.js";
 import { useSimulation } from "./hooks/useSimulation.js";
 import { buildKnockoutResolution, deriveTournamentProgress } from "./lib/bracket.js";
@@ -128,7 +128,18 @@ export default function App() {
   return (
     <main>
       <header className="section">
-        <h1>WC 2026 — Monte-Carlo Outlook</h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px" }}>
+          <h1 style={{ margin: 0 }}>WC 2026 — Monte-Carlo Outlook</h1>
+          <a
+            href={`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="muted"
+            style={{ fontSize: "13px", whiteSpace: "nowrap", alignSelf: "center" }}
+          >
+            github.com/{GITHUB_OWNER}/{GITHUB_REPO}
+          </a>
+        </div>
         <p className="muted">
           A Monte-Carlo simulation of the 2026 World Cup, run live in your browser and
           re-conditioned on the actual results as they come in — not a fixed, one-off forecast.
