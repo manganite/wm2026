@@ -364,3 +364,47 @@ instead matched to the official 2026 regulations:
   and Elo is not a substitute for the latter. The draw is an unbiased
   resolution of a tie the model genuinely has no signal on. `pickBestThirds`
   mirrors the same logic for the best-thirds chain.
+
+---
+
+## References
+
+**Match model**
+
+1. Dixon, M.J. and Coles, S.G. (1997). "Modelling Association Football Scores
+   and Inefficiencies in the Football Betting Market." *Journal of the Royal
+   Statistical Society: Series C (Applied Statistics)*, 46(3), pp. 375–386.
+   DOI: [10.1111/1467-9876.00065](https://doi.org/10.1111/1467-9876.00065)
+   — the source of the Dixon-Coles τ correction applied to 0:0, 1:0, 0:1,
+   1:1 scorelines; also introduces the independent-Poisson baseline this
+   model extends.
+
+2. Maher, M.J. (1982). "Modelling Association Football Scores." *Statistica
+   Neerlandica*, 36(3), pp. 109–118.
+   DOI: [10.1111/j.1467-9574.1982.tb00782.x](https://doi.org/10.1111/j.1467-9574.1982.tb00782.x)
+   — the original independent-Poisson goal model that Dixon-Coles extends.
+
+**Elo ratings**
+
+3. World Football Elo Ratings — [eloratings.net](https://www.eloratings.net).
+   Source of all team ratings used in this simulation (snapshot captured
+   2026-06-08, see `data/teams.json`). The site documents its update formula
+   and K-factor choices; the penalty-shootout win probability used here
+   (`p = 1 / (1 + 10^(−ΔElo/2000))`) is the standard Elo formula with
+   the same 2000-point scale factor eloratings.net applies to football.
+
+**Tournament rules**
+
+4. *FIFA World Cup 26™ Regulations* (2024). Fédération Internationale de
+   Football Association. Available at
+   [fifa.com](https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicous2026).
+   — Article 13 (group-stage tiebreakers), Annex C (best-thirds assignment
+   table), and Matches 73–104 (official knockout bracket adjacency) are all
+   implemented verbatim in this simulation.
+
+**Bookmaker odds (calibration snapshot)**
+
+5. FanDuel Sportsbook outright-winner odds for the 2026 FIFA World Cup, as
+   reported by Fox Sports, captured 2026-06-07. Used only as a
+   plausibility check in `verify.mjs`; see `data/odds.json` for the full
+   snapshot and conversion methodology.
