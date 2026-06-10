@@ -28,40 +28,42 @@ export function TitleProbabilityTable({ teams, probs }) {
   }
 
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          <th></th>
-          <th>Team</th>
-          <th>Group</th>
-          {COLUMNS.map((c) => (
-            <th
-              key={c.key}
-              className={sort.key === c.key ? styles.active : ""}
-              onClick={() => toggleSort(c.key)}
-              aria-sort={sort.key === c.key ? (sort.dir === -1 ? "descending" : "ascending") : "none"}
-            >
-              {c.label} {sort.key === c.key ? (sort.dir === -1 ? "▾" : "▴") : ""}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(({ team, p }, i) => (
-          <tr key={team.code}>
-            <td className={styles.rank}>{i + 1}</td>
-            <td>
-              <TeamLabel code={team.code} teamsByCode={{ [team.code]: team }} showCode />
-            </td>
-            <td className="muted">{team.group}</td>
+    <div className={styles.tableWrap}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Team</th>
+            <th>Group</th>
             {COLUMNS.map((c) => (
-              <td key={c.key} className={styles.numCell}>
-                <ProbBar value={p[c.key]} />
-              </td>
+              <th
+                key={c.key}
+                className={sort.key === c.key ? styles.active : ""}
+                onClick={() => toggleSort(c.key)}
+                aria-sort={sort.key === c.key ? (sort.dir === -1 ? "descending" : "ascending") : "none"}
+              >
+                {c.label} {sort.key === c.key ? (sort.dir === -1 ? "▾" : "▴") : ""}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map(({ team, p }, i) => (
+            <tr key={team.code}>
+              <td className={styles.rank}>{i + 1}</td>
+              <td>
+                <TeamLabel code={team.code} teamsByCode={{ [team.code]: team }} showCode />
+              </td>
+              <td className="muted">{team.group}</td>
+              {COLUMNS.map((c) => (
+                <td key={c.key} className={styles.numCell}>
+                  <ProbBar value={p[c.key]} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

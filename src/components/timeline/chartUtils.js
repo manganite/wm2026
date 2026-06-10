@@ -1,8 +1,9 @@
 // Small SVG-chart helpers shared by the Timeline visualizations (V1/V3/V4) —
 // kept tiny and dependency-free since this app hand-rolls its charts.
-import { T0 } from "../../lib/timeline.js";
+import { T0, matchesOnDate } from "../../lib/timeline.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const TOP_MOVERS = 5;
 
 // Maps a timeline point's date (T0 or "YYYY-MM-DD") to an x pixel in
 // [0, innerWidth], for the fixed range [t0Date - 1 day, endDate]. T0 maps to
@@ -72,4 +73,23 @@ export function resolveMatchTeams(fixture, resolution) {
   if (typeof fixture.home === "string") return { home: fixture.home, away: fixture.away };
   const r = resolution?.get(fixture.id);
   return { home: r?.home ?? null, away: r?.away ?? null };
+}
+
+// For each consecutive pair of timeline points, the matches played on the
+// later point's date and the biggest title-probability movers those results
+// produced (the deltas behind V1's lines). Shared by MatchImpactPanel (full
+// reverse-chronological list) and LatestResultsCard (just the last entry).
+export function computeImpactEntries(points, teams, fixtures, results) {
+  const out = [];
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const movers = teams
+      .map((t) => ({ code: t.code, delta: curr.probs[t.code].W - prev.probs[t.code].W }))
+      .filter((m) => Math.abs(m.delta) > 0.0005)
+      .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+      .slice(0, TOP_MOVERS);
+    out.push({ date: curr.date, matches: matchesOnDate(fixtures, results, curr.date), movers });
+  }
+  return out;
 }

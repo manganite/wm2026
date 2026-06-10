@@ -1,3 +1,9 @@
+/* Lets the wide 9-column table scroll horizontally on narrow screens
+   instead of forcing the whole page to overflow sideways. */
+.tableWrap {
+  overflow-x: auto;
+}
+
 .table th, .table td {
   padding: 6px 10px;
   text-align: left;

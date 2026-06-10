@@ -20,6 +20,12 @@ export function AccuracyReadout({ accuracy }) {
 
   return (
     <div className={styles.row}>
+      {n < 10 && (
+        <p className={`warn-banner ${styles.caveat}`}>
+          Only {n} match{n === 1 ? "" : "es"} played so far — too small a sample for these
+          scores to be statistically meaningful.
+        </p>
+      )}
       <div className={styles.stat}>
         <div className={styles.label}>Brier score</div>
         <span className={styles.value}>{brier.toFixed(3)}</span>

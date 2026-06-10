@@ -73,23 +73,35 @@ export function StageDistributionChart({ points, teams, fixtures, defaultCode })
               </g>
             ))}
 
-            {SEGMENTS.map((seg, segIdx) => {
-              const top = points
-                .map(
-                  (p, i) =>
-                    `${i === 0 ? "M" : "L"}${xOf(p.date).toFixed(2)},${yOf(cumByPoint[i][segIdx].upper).toFixed(2)}`
-                )
-                .join(" ");
-              const bottom = points
-                .slice()
-                .reverse()
-                .map((p, ri) => {
-                  const i = points.length - 1 - ri;
-                  return `L${xOf(p.date).toFixed(2)},${yOf(cumByPoint[i][segIdx].lower).toFixed(2)}`;
-                })
-                .join(" ");
-              return <path key={seg.key} d={`${top} ${bottom} Z`} fill={seg.color} className={styles.band} />;
-            })}
+            {points.length === 1
+              ? cumByPoint[0].map((seg) => (
+                  <rect
+                    key={seg.key}
+                    x={xOf(points[0].date) - 12}
+                    y={yOf(seg.upper)}
+                    width={24}
+                    height={yOf(seg.lower) - yOf(seg.upper)}
+                    fill={seg.color}
+                    className={styles.band}
+                  />
+                ))
+              : SEGMENTS.map((seg, segIdx) => {
+                  const top = points
+                    .map(
+                      (p, i) =>
+                        `${i === 0 ? "M" : "L"}${xOf(p.date).toFixed(2)},${yOf(cumByPoint[i][segIdx].upper).toFixed(2)}`
+                    )
+                    .join(" ");
+                  const bottom = points
+                    .slice()
+                    .reverse()
+                    .map((p, ri) => {
+                      const i = points.length - 1 - ri;
+                      return `L${xOf(p.date).toFixed(2)},${yOf(cumByPoint[i][segIdx].lower).toFixed(2)}`;
+                    })
+                    .join(" ");
+                  return <path key={seg.key} d={`${top} ${bottom} Z`} fill={seg.color} className={styles.band} />;
+                })}
 
             {clusterStageMarkers(STAGE_MARKERS, boundaries, xOf).map((cluster) => (
               <g key={cluster.label}>

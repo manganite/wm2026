@@ -9,7 +9,7 @@ import styles from "./KnockoutBracket.module.css";
 // the brief's "advancement probabilities feeding" unfilled slots). `score`
 // is shown only for played matches; `isWinner` highlights the side that the
 // engine's own resolveWinnerToken/score comparison says advanced.
-export function BracketSlot({ code, label, teamsByCode, score, isWinner, advancement }) {
+export function BracketSlot({ code, label, via, teamsByCode, score, isWinner, advancement }) {
   return (
     <div className={`${styles.slot} ${isWinner ? styles.winner : ""}`}>
       <div className={styles.slotRow}>
@@ -18,6 +18,7 @@ export function BracketSlot({ code, label, teamsByCode, score, isWinner, advance
         </span>
         {score != null && <span className={styles.slotScore}>{score}</span>}
       </div>
+      {code && <div className={`muted ${styles.via}`}>via {via}</div>}
       {!code && advancement?.length > 0 && (
         <ul className={styles.advancement}>
           {advancement.map(({ code: c, prob }) => (

@@ -1,6 +1,3 @@
-import { useMemo } from "react";
-import { useTimeline } from "../../hooks/useTimeline.js";
-import { buildKnockoutResolution } from "../../lib/bracket.js";
 import { HISTORY_RUNS, DEFAULT_RUNS } from "../../config.js";
 import { LoadingState } from "../common/LoadingState.jsx";
 import { TitleProbabilityChart } from "./TitleProbabilityChart.jsx";
@@ -8,15 +5,14 @@ import { MatchImpactPanel } from "./MatchImpactPanel.jsx";
 import { StageDistributionChart } from "./StageDistributionChart.jsx";
 import { GroupQualificationCharts } from "./GroupQualificationCharts.jsx";
 
-// Orchestrates the Timeline section: runs useTimeline (re-conditioning the
-// engine on the real results up to each match day, cached), then lays out
-// V1-V4. `results` is always the REAL results — the timeline shows how the
-// actual tournament has unfolded, independent of the projected start point
-// used elsewhere on the page.
-export function TimelineSection({ data, results, teams }) {
-  const { points, status, progress } = useTimeline({ data, results });
-  const resolution = useMemo(() => buildKnockoutResolution(data, results), [data, results]);
-
+// Orchestrates the Timeline section: lays out V1-V4 from the timeline points
+// computed by useTimeline (re-conditioning the engine on the real results up
+// to each match day, cached) — lifted to App.jsx so the same points/resolution
+// can also feed LatestResultsCard near the top of the page. `results` is
+// always the REAL results — the timeline shows how the actual tournament has
+// unfolded, independent of the projected start point used elsewhere on the
+// page.
+export function TimelineSection({ points, status, progress, resolution, data, results, teams }) {
   if (points.length === 0) {
     return <LoadingState label="Loading timeline…" />;
   }

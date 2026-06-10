@@ -1,0 +1,20 @@
+.button {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 50;
+}
+
+.button:hover {
+  border-color: var(--accent);
+}

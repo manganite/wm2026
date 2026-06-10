@@ -3,6 +3,7 @@ import { buildContext, predictKnownMatches, PARAMS } from "../engine.mjs";
 import { DEFAULT_RUNS, DEFAULT_SEED, GITHUB_OWNER, GITHUB_REPO } from "./config.js";
 import { useTournamentData } from "./hooks/useTournamentData.js";
 import { useSimulation } from "./hooks/useSimulation.js";
+import { useTimeline } from "./hooks/useTimeline.js";
 import { buildKnockoutResolution, deriveTournamentProgress } from "./lib/bracket.js";
 import {
   synthesizeGroupStageResults,
@@ -12,10 +13,12 @@ import {
 import { computeAccuracy } from "./lib/accuracy.js";
 
 import { LoadingState, ErrorBanner, WarnBanner } from "./components/common/LoadingState.jsx";
+import { BackToTop } from "./components/common/BackToTop.jsx";
 import { GroupStandingsTables } from "./components/groups/GroupStandingsTables.jsx";
 import { TitleProbabilityTable } from "./components/outlook/TitleProbabilityTable.jsx";
 import { ProgressionChart } from "./components/outlook/ProgressionChart.jsx";
 import { TimelineSection } from "./components/timeline/TimelineSection.jsx";
+import { LatestResultsCard } from "./components/timeline/LatestResultsCard.jsx";
 import { FixturesPanel } from "./components/fixtures/FixturesPanel.jsx";
 import { KnockoutBracket } from "./components/bracket/KnockoutBracket.jsx";
 import { NowMarker } from "./components/live/NowMarker.jsx";
@@ -106,6 +109,10 @@ export default function App() {
     [data, results, actualResolution]
   );
 
+  // Lifted here (rather than inside TimelineSection) so LatestResultsCard near
+  // the top of the page can share the same computation/cache.
+  const timeline = useTimeline({ data, results });
+
   if (status === "loading") {
     return (
       <main>
@@ -146,6 +153,16 @@ export default function App() {
           re-conditioned on the actual results as they come in — not a fixed, one-off forecast.
         </p>
       </header>
+
+      {data && results && (
+        <LatestResultsCard
+          points={timeline.points}
+          teams={teams}
+          fixtures={fixtures}
+          results={results}
+          resolution={actualResolution}
+        />
+      )}
 
       <div className="section">
         <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -210,13 +227,23 @@ export default function App() {
             </div>
           </section>
 
-          <section className="section">
+          <section className="section" id="timeline">
             <h2>Timeline</h2>
             <p className="muted">
               How the model's outlook has evolved as real results have come in — every point is
               the model re-run from scratch, conditioned only on results entered by that date.
             </p>
-            {data && results && <TimelineSection data={data} results={results} teams={teams} />}
+            {data && results && (
+              <TimelineSection
+                points={timeline.points}
+                status={timeline.status}
+                progress={timeline.progress}
+                resolution={actualResolution}
+                data={data}
+                results={results}
+                teams={teams}
+              />
+            )}
           </section>
 
           <section className="section">
@@ -267,6 +294,7 @@ export default function App() {
           )}
         </>
       )}
+      <BackToTop />
     </main>
   );
 }

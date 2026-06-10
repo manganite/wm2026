@@ -8,6 +8,14 @@
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .outcomeRow .tag {
+    width: 48px;
+  }
+
+  .tendencyRow .tag {
+    width: 32px;
+  }
 }
 
 .block {
@@ -15,6 +23,7 @@
   border-radius: 8px;
   padding: 8px 10px;
   background: var(--bg-card);
+  min-width: 0;
 }
 
 .label {

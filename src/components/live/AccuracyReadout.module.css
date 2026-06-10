@@ -29,3 +29,8 @@
   font-size: 12px;
   margin-top: 6px;
 }
+
+.caveat {
+  flex-basis: 100%;
+  margin: 0 0 4px;
+}

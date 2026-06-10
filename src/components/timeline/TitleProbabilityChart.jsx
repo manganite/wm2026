@@ -131,14 +131,17 @@ export function TitleProbabilityChart({ points, teams, fixtures, results, resolu
             </text>
 
             <path d={linePath(points, xOf, yOf, fieldValue)} className={styles.fieldLine} stroke={colors[FIELD_CODE]} />
+            <circle cx={xOf(last.date)} cy={yOf(fieldValue(last))} r={2.5} fill={colors[FIELD_CODE]} />
 
             {visibleCodes.map((code) => (
-              <path
-                key={code}
-                d={linePath(points, xOf, yOf, (p) => p.probs[code].W)}
-                className={styles.line}
-                stroke={colors[code]}
-              />
+              <g key={code}>
+                <path
+                  d={linePath(points, xOf, yOf, (p) => p.probs[code].W)}
+                  className={styles.line}
+                  stroke={colors[code]}
+                />
+                <circle cx={xOf(last.date)} cy={yOf(last.probs[code].W)} r={2.5} fill={colors[code]} />
+              </g>
             ))}
 
             {hoverPoint && (

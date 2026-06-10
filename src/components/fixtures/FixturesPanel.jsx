@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { predictMatch, resolveWinnerToken, PARAMS } from "../../../engine.mjs";
 import { describeRef } from "../../lib/bracket.js";
 import { FixtureGroup } from "./FixtureGroup.jsx";
@@ -52,6 +52,7 @@ function knockoutRow(fixture, results, resolution, eloOf, teamsByCode) {
 // once their participants are concretely known.
 export function FixturesPanel({ teams, fixtures, results, predictions, knockoutResolution, eloOf }) {
   const [tab, setTab] = useState("group");
+  const [activeGroupId, setActiveGroupId] = useState(null);
 
   const teamsByCode = useMemo(() => Object.fromEntries(teams.map((t) => [t.code, t])), [teams]);
   const predictionById = useMemo(() => Object.fromEntries(predictions.map((p) => [p.id, p])), [predictions]);
@@ -76,6 +77,29 @@ export function FixturesPanel({ teams, fixtures, results, predictions, knockoutR
       .map((s) => ({ title: KO_STAGE_TITLES[s], rows: byStage[s] }));
   }, [fixtures, results, knockoutResolution, eloOf, teamsByCode]);
 
+  // Highlights the group nav button for whichever group section is currently
+  // scrolled near the top of the viewport (scroll-spy).
+  useEffect(() => {
+    if (tab !== "group") return;
+    const elements = groupSections.map((s) => document.getElementById(s.id)).filter(Boolean);
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length === 0) return;
+        // Sections are tall enough that a tail end and a new head can both sit
+        // in the band at once — prefer the one whose header most recently
+        // entered view (largest top) over the one that's mostly scrolled past.
+        const current = visible.reduce((a, b) => (a.boundingClientRect.top >= b.boundingClientRect.top ? a : b));
+        setActiveGroupId(current.target.id);
+      },
+      { rootMargin: "-10% 0px -70% 0px", threshold: 0 }
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [tab, groupSections]);
+
   const sections = tab === "group" ? groupSections : knockoutSections;
 
   return (
@@ -94,7 +118,7 @@ export function FixturesPanel({ teams, fixtures, results, predictions, knockoutR
           {groupSections.map((s) => (
             <button
               key={s.id}
-              className={styles.groupNavItem}
+              className={`${styles.groupNavItem} ${activeGroupId === s.id ? styles.active : ""}`}
               onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
             >
               {s.title.replace("Group ", "")}

@@ -12,6 +12,7 @@ const STAGE_TITLES = {
   SF: "Semi-finals",
   F: "Final",
 };
+const STAGE_NAV_LABELS = { R32: "R32", R16: "R16", QF: "QF", SF: "SF", F: "Final" };
 
 const fmtScore = ([h, a]) => `${h}:${a}`;
 const fmtPct = (p) => `${(p * 100).toFixed(0)}%`;
@@ -45,6 +46,7 @@ function buildMatch(fixture, results, resolution, eloOf, teamsByCode, slotAdvanc
     home: {
       code: homeCode,
       label: labelFor(homeCode, fixture.home),
+      via: describeRef(fixture.home),
       score: played ? played[0] : null,
       isWinner: winnerSide === "home",
       advancement: advancementFor(homeCode, "home"),
@@ -52,6 +54,7 @@ function buildMatch(fixture, results, resolution, eloOf, teamsByCode, slotAdvanc
     away: {
       code: awayCode,
       label: labelFor(awayCode, fixture.away),
+      via: describeRef(fixture.away),
       score: played ? played[1] : null,
       isWinner: winnerSide === "away",
       advancement: advancementFor(awayCode, "away"),
@@ -94,9 +97,20 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
         probability — a guess, not a result; the full win/draw/tendency and xG breakdown for the
         same match is in Fixtures → Knockout stage.
       </p>
+      <div className={styles.roundNav}>
+        {rounds.map(({ stage }) => (
+          <button
+            key={stage}
+            className={styles.roundNavItem}
+            onClick={() => document.getElementById(`bracket-${stage}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          >
+            {STAGE_NAV_LABELS[stage]}
+          </button>
+        ))}
+      </div>
       <div className={styles.bracket}>
         {rounds.map(({ stage, matches }) => (
-          <div className={styles.round} key={stage}>
+          <div className={styles.round} id={`bracket-${stage}`} key={stage}>
             <div className={styles.roundTitle}>{STAGE_TITLES[stage]}</div>
             <div className={styles.matches}>
               {matches.map((m) => (
