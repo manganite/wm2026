@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { runMonteCarlo, predictMatch } from "./engine.mjs";
 import { ANNEX_C_ROWS, ANNEX_C_WINNERS } from "./thirdPlaceAssignments.mjs";
 import { validateResults } from "./src/lib/validateResults.js";
+import { T0, resultsUpTo, timelinePoints, stageBoundaries, compareTimelineDates } from "./src/lib/timeline.js";
 
 const load = p => JSON.parse(readFileSync(new URL(p, import.meta.url)));
 const data = {
@@ -170,6 +171,83 @@ function ranksWithTies(codes, key) {
         if (!m[side].w || !feederIds.has(m[side].w)) errs++;
     assert(errs === 0, `Bracket: all ${stage} slots are {w: valid-${feederName}-id}`);
   }
+
+  // --- Knockout dates (data/fixtures.json) ---
+  // Required for the timeline feature: resultsUpTo() needs a date on every
+  // fixture, group and knockout alike.
+  const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+  const koDateOf = {};
+  for (const m of data.fixtures.knockout) koDateOf[m.id] = m.date;
+
+  let dateErrs = 0;
+  for (const m of data.fixtures.knockout)
+    if (!ISO_DATE.test(m.date) || m.date < "2026-06-28") dateErrs++;
+  assert(dateErrs === 0, "Bracket: every knockout fixture has a valid ISO date >= 2026-06-28");
+
+  // Each {w: "X"} feeder must be played on or before the match it feeds.
+  let feederDateErrs = 0;
+  for (const m of data.fixtures.knockout)
+    for (const side of ["home", "away"]) {
+      const feederId = m[side]?.w;
+      if (!feederId) continue;
+      if (!(koDateOf[feederId] <= m.date)) feederDateErrs++;
+    }
+  assert(feederDateErrs === 0, "Bracket: every knockout match's date is >= its feeders' dates");
+
+  // Loose sanity bounds against the official R32 Jun28-Jul3 / R16 Jul4-7 /
+  // QF Jul9-11 / SF Jul14-15 / Final Jul19 windows.
+  const STAGE_RANGES = {
+    R32: ["2026-06-28", "2026-07-03"],
+    R16: ["2026-07-04", "2026-07-07"],
+    QF:  ["2026-07-09", "2026-07-11"],
+    SF:  ["2026-07-14", "2026-07-15"],
+    F:   ["2026-07-19", "2026-07-19"],
+  };
+  let rangeErrs = 0;
+  for (const [stage, [lo, hi]] of Object.entries(STAGE_RANGES))
+    for (const m of byStage[stage] ?? [])
+      if (m.date < lo || m.date > hi) rangeErrs++;
+  assert(rangeErrs === 0, "Bracket: knockout dates fall within the official per-stage windows");
+
+  // --- src/lib/timeline.js (timeline view helpers) ---
+  const tlFixtures = data.fixtures;
+
+  const boundaries = stageBoundaries(tlFixtures);
+  assert(
+    boundaries.groupsEnd === "2026-06-27" &&
+      boundaries.R32 === "2026-06-28" &&
+      boundaries.R16 === "2026-07-04" &&
+      boundaries.QF === "2026-07-09" &&
+      boundaries.SF === "2026-07-14" &&
+      boundaries.F === "2026-07-19",
+    "timeline: stageBoundaries() matches the official group/knockout start dates"
+  );
+
+  // resultsUpTo: a small fixed conditioning subset, checked against the real data.
+  const sampleResults = { matches: { GA1: [2, 0], GA2: [1, 1], GA3: [0, 0] } };
+  const upToGA1 = resultsUpTo(sampleResults, tlFixtures, "2026-06-11");
+  const upToGA3 = resultsUpTo(sampleResults, tlFixtures, "2026-06-18");
+  assert(
+    Object.keys(upToGA1.matches).sort().join(",") === "GA1,GA2" &&
+      Object.keys(upToGA3.matches).sort().join(",") === "GA1,GA2,GA3",
+    "timeline: resultsUpTo() includes only matches with fixture date <= the given date"
+  );
+
+  // timelinePoints: t0 + one point per distinct date with >=1 entered result,
+  // sorted chronologically (t0 first). GA1/GA2 share 2026-06-11, GA3 is
+  // 2026-06-18 -> two distinct dates, deduplicated, plus t0.
+  const points = timelinePoints(sampleResults, tlFixtures);
+  assert(
+    points.length === 3 && points[0] === T0 && points[1] === "2026-06-11" && points[2] === "2026-06-18",
+    "timeline: timelinePoints() = [t0, ...distinct result dates] (no point for dates with no results)"
+  );
+
+  // compareTimelineDates: t0 sorts first, then chronological.
+  const order = ["2026-07-19", T0, "2026-06-28"].sort(compareTimelineDates);
+  assert(
+    order[0] === T0 && order[1] === "2026-06-28" && order[2] === "2026-07-19",
+    "timeline: compareTimelineDates() orders t0 before any ISO date, then chronologically"
+  );
 
   if (failures > 0) {
     console.error(`\n${failures} assertion(s) failed — fix before trusting simulation output.`);

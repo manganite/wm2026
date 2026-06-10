@@ -13,5 +13,12 @@ export const DEFAULT_RUNS = 15000;
 export const MAX_RUNS = 100000;
 export const DEFAULT_SEED = 12345;
 
+// Lower run-count used for each historical point in the Timeline view — at
+// N=5000 the standard error of a 20% probability is ~0.6pp, plenty for a
+// curve, and keeps the ~20-35-point timeline computation in the tens of
+// seconds (cached afterwards). The "current" state above keeps using
+// DEFAULT_RUNS.
+export const HISTORY_RUNS = 5000;
+
 // How often the live site re-checks results.json for updates (ms).
 export const RESULTS_POLL_INTERVAL_MS = 60_000;

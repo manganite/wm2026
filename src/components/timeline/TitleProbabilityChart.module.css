@@ -1,0 +1,154 @@
+.chartArea {
+  position: relative;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.gridline {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  font-size: 11px;
+  fill: var(--text-muted);
+}
+
+.stageLine {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.stageLabel {
+  font-size: 10px;
+  fill: var(--text-muted);
+}
+
+.nowLine {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.nowLabel {
+  font-size: 10px;
+  fill: var(--accent);
+  font-weight: 600;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2;
+}
+
+.fieldLine {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.hoverLine {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.tooltip {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 8px 10px;
+  font-size: 12px;
+  min-width: 160px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tooltipDate {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tooltipMatches {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.tooltipTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tooltipTable td {
+  padding: 1px 0;
+  white-space: nowrap;
+}
+
+.tooltipValue {
+  text-align: right;
+  padding-left: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipDelta {
+  text-align: right;
+  padding-left: 6px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.expandBtn {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.expandBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

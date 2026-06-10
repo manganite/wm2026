@@ -1,0 +1,83 @@
+.controls {
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.select {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 13px;
+}
+
+.chartArea {
+  position: relative;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.gridline {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  font-size: 11px;
+  fill: var(--text-muted);
+}
+
+.band {
+  stroke: none;
+}
+
+.stageLine {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.stageLabel {
+  font-size: 10px;
+  fill: var(--text-muted);
+}
+
+.nowLine {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.nowLabel {
+  font-size: 10px;
+  fill: var(--accent);
+  font-weight: 600;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}

@@ -15,6 +15,7 @@ import { LoadingState, ErrorBanner, WarnBanner } from "./components/common/Loadi
 import { GroupStandingsTables } from "./components/groups/GroupStandingsTables.jsx";
 import { TitleProbabilityTable } from "./components/outlook/TitleProbabilityTable.jsx";
 import { ProgressionChart } from "./components/outlook/ProgressionChart.jsx";
+import { TimelineSection } from "./components/timeline/TimelineSection.jsx";
 import { FixturesPanel } from "./components/fixtures/FixturesPanel.jsx";
 import { KnockoutBracket } from "./components/bracket/KnockoutBracket.jsx";
 import { NowMarker } from "./components/live/NowMarker.jsx";
@@ -207,6 +208,15 @@ export default function App() {
             <div className="card">
               <ProgressionChart teams={teams} probs={sim.probs} />
             </div>
+          </section>
+
+          <section className="section">
+            <h2>Timeline</h2>
+            <p className="muted">
+              How the model's outlook has evolved as real results have come in — every point is
+              the model re-run from scratch, conditioned only on results entered by that date.
+            </p>
+            {data && results && <TimelineSection data={data} results={results} teams={teams} />}
           </section>
 
           <section className="section">

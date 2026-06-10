@@ -24,6 +24,11 @@ export const PARAMS = {
                         // Elo update to check if this value needs adjusting.
 };
 
+// Bump whenever PARAMS or the sampling logic changes — the timeline feature
+// (src/hooks/useTimeline.js) hashes this into its localStorage cache keys so
+// stale points get recomputed automatically.
+export const ENGINE_VERSION = 1;
+
 // ---- seedable RNG (mulberry32) ---------------------------------------------
 export function makeRng(seed) {
   let a = seed >>> 0;
