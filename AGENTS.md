@@ -50,6 +50,11 @@ work here*, not what the app does.
    best-thirds, …), cross-check it against the official FIFA regulations the
    way the existing rules-fidelity work was — see the README's "Fidelity to
    FIFA's official rules" — and update that section's citations to match.
+6. **Bump `ENGINE_VERSION` in `engine.mjs`** whenever you change `PARAMS` or the
+   sampling/simulation logic. The Timeline view caches each historical point in
+   the browser's `localStorage` keyed in part by `ENGINE_VERSION`; without a
+   bump, stale points computed under the old logic keep being served instead of
+   recomputed.
 
 ## Conventions
 

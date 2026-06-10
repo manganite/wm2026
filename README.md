@@ -15,7 +15,8 @@ match not yet played is simulated.
 
 ### Title and stage probabilities ("Tournament outlook" table)
 
-The engine runs **N complete tournaments** (default 40 000). In each run it
+The engine runs **N complete tournaments** (default 15 000, adjustable in the
+UI up to 100 000). In each run it
 simulates every unplayed match by sampling a scoreline from the match model
 (see below), applies the official tiebreaker rules to determine group rankings,
 and propagates winners through the knockout bracket all the way to a champion.
@@ -40,6 +41,51 @@ R16)`. All segments for one team sum to 100%.
 
 Teams are ranked by title probability. The chart shows the top 12 by default;
 click "Show all 48 teams" to expand.
+
+### Timeline — how the picture has evolved
+
+Every other section answers "what does the model think *now*?". The Timeline
+section answers "how did we get here?": how each team's title probability,
+exit-stage distribution, and group-qualification odds changed as real results
+were entered, match day by match day.
+
+**No history is stored.** Each point on the timeline is computed from
+scratch: the app takes the subset of `results.json` whose fixtures were
+played on or before that date, conditions the engine on just that subset, and
+re-runs the Monte-Carlo simulation. The seeded RNG (`DEFAULT_SEED`) makes
+every point reproducible, so the whole timeline is always derivable from
+`fixtures.json` (dates, including the knockout match dates) + `results.json`
+(scores) alone — there's a `t0` point (empty conditioning, the
+pre-tournament prior) plus one point per date that has at least one entered
+result.
+
+- **Title probability over time** — a line per top team (`probs[code].W` at
+  each timeline point) plus a "Field" line for everything else, with vertical
+  markers for the end of the group stage and the start of each knockout
+  round. Hover a point to see that day's results and each visible team's
+  change since the previous point.
+- **Match impact** — for each match day, the matches played and the biggest
+  title-probability movers (the deltas behind the line chart above), newest
+  first.
+- **Stage distribution over time** — for a chosen team, the same exit-stage
+  breakdown as the Progression chart above, but as a stacked area evolving
+  across the timeline instead of frozen at "now".
+- **Group qualification races** — per group, each of its four teams'
+  probability of reaching the R32, through the end of the group stage.
+  Best-third uncertainty can keep these moving even after a team's own group
+  has finished, since it depends on how the *other* groups' third-placed
+  teams compare.
+
+**Run-count caveat**: timeline points use `HISTORY_RUNS = 5000` simulations
+(vs `DEFAULT_RUNS = 15 000` for the live "Tournament outlook" table above), so the
+timeline's most recent point can differ from that table by roughly a
+percentage point — plenty of precision for a curve, but not identical.
+
+**Caching**: each point is cached in the browser's `localStorage`, keyed by a
+hash of its result subset, `HISTORY_RUNS`, the seed, and `ENGINE_VERSION`
+(bumped whenever `engine.mjs`'s simulation logic changes, invalidating
+previously-cached points). Only new or changed match days are recomputed, in
+a dedicated Web Worker, so the timeline never blocks the rest of the UI.
 
 ### Per-match predictions ("Fixtures" panel)
 
