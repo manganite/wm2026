@@ -454,3 +454,9 @@ instead matched to the official 2026 regulations:
    reported by Fox Sports, captured 2026-06-07. Used only as a
    plausibility check in `verify.mjs`; see `data/odds.json` for the full
    snapshot and conversion methodology.
+
+**Inspiration**
+
+6. [Monte-Carlo-Simulation-Chess-Candidates-2026](https://github.com/Periculum/Monte-Carlo-Simulation-Chess-Candidates-2026)
+   — a Monte-Carlo simulation of the 2026 Chess Candidates Tournament, and
+   the inspiration for this project.
