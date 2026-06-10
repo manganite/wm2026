@@ -94,8 +94,8 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
         tournaments. Once real results concretely decide a slot (group winner, shootout winner,
         etc.) it fills in with that team. For matches where both sides are already known but not
         yet played, a "Projected" scoreline shows the model's single most-likely outcome with its
-        probability — a guess, not a result; the full win/draw/tendency and xG breakdown for the
-        same match is in Fixtures → Knockout stage.
+        probability — a guess, not a result; the full win/draw/tendency and expected-goals
+        breakdown for the same match is in Fixtures → Knockout stage.
       </p>
       <div className={styles.roundNav}>
         {rounds.map(({ stage }) => (

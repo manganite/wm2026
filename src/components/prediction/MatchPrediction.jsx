@@ -43,19 +43,19 @@ export function MatchPrediction({ prediction, homeCode, awayCode }) {
         <div className={styles.label}>Most likely score, by outcome</div>
         <div className={styles.byOutcome}>
           <div className={styles.outcomeRow}>
-            <span className={styles.tag}>{home} win</span>
+            <span className={styles.tag}>{home}</span>
             <span className={styles.score}>{fmtScore(mostLikelyByOutcome.homeWin.score)}</span>
-            <span className={styles.scoreProb}>{fmtPct(mostLikelyByOutcome.homeWin.prob)} of those</span>
+            <span className={styles.scoreProb}>({fmtPct(mostLikelyByOutcome.homeWin.prob)})</span>
           </div>
           <div className={styles.outcomeRow}>
             <span className={styles.tag}>Draw</span>
             <span className={styles.score}>{fmtScore(mostLikelyByOutcome.draw.score)}</span>
-            <span className={styles.scoreProb}>{fmtPct(mostLikelyByOutcome.draw.prob)} of those</span>
+            <span className={styles.scoreProb}>({fmtPct(mostLikelyByOutcome.draw.prob)})</span>
           </div>
           <div className={styles.outcomeRow}>
-            <span className={styles.tag}>{away} win</span>
+            <span className={styles.tag}>{away}</span>
             <span className={styles.score}>{fmtScore(mostLikelyByOutcome.awayWin.score)}</span>
-            <span className={styles.scoreProb}>{fmtPct(mostLikelyByOutcome.awayWin.prob)} of those</span>
+            <span className={styles.scoreProb}>({fmtPct(mostLikelyByOutcome.awayWin.prob)})</span>
           </div>
         </div>
       </div>
@@ -73,7 +73,7 @@ export function MatchPrediction({ prediction, homeCode, awayCode }) {
       </div>
 
       <div className={styles.block}>
-        <div className={styles.label}>Expected goals (xG)</div>
+        <div className={styles.label}>Expected goals</div>
         <span className={styles.xg}>
           {expectedGoals[0].toFixed(2)} : {expectedGoals[1].toFixed(2)}
         </span>

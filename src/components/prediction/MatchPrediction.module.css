@@ -9,10 +9,6 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .outcomeRow .tag {
-    width: 48px;
-  }
-
   .tendencyRow .tag {
     width: 32px;
   }
@@ -93,7 +89,7 @@
 }
 
 .outcomeRow .tag {
-  width: 64px;
+  width: 28px;
   color: var(--text-muted);
 }
 
@@ -103,6 +99,7 @@
 
 .outcomeRow .scoreProb {
   margin-left: 0;
+  white-space: nowrap;
 }
 
 .xg {
