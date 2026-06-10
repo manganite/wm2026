@@ -2,6 +2,8 @@
 
 **Live app: https://manganite.github.io/wm2026/**
 
+![Progression panel showing each team's title probability broken down by stage reached](docs/images/screenshot.png)
+
 Client-side Monte-Carlo simulation of the 2026 FIFA World Cup. Runs entirely
 in your browser: no backend, no server. The engine samples thousands of
 complete tournaments — respecting the real schedule, official knockout bracket,
