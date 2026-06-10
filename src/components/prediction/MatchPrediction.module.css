@@ -104,7 +104,8 @@
 
 .xg {
   font-family: var(--mono);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-heading);
+  white-space: nowrap;
 }
