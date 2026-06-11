@@ -1,5 +1,7 @@
 {
   "_comment": "Hand-edit this file as the tournament unfolds. Key = match id from fixtures.json, value = [homeGoals, awayGoals]. Anything not listed here is treated as not-yet-played and gets simulated. Example: \"GE1\": [3, 0]. KNOCKOUT MATCHES decided on penalties (level after extra time): add the shootout winner as a 3rd element, e.g. \"R32-1\": [1, 1, \"BRA\"] or [1, 1, \"H\"] / [1, 1, \"A\"]. The winner token is only needed for level scores; a decisive score like [2,1] needs no token.",
-  "updated": "2026-06-07T00:00:00Z",
-  "matches": {}
+  "updated": "2026-06-11T00:00:00Z",
+  "matches": {
+    "GA1": [2, 0]
+  }
 }
