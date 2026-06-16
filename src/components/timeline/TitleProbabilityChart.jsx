@@ -11,10 +11,7 @@ const MARGIN = { top: 16, right: 16, bottom: 30, left: 44 };
 const INNER_W = WIDTH - MARGIN.left - MARGIN.right;
 const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom;
 
-const DEFAULT_TOP_N = 8;
-// Capped at the palette size (teamColors.js) so expanded teams never reuse a
-// color already shown for one of the default top 8.
-const EXPANDED_TOP_N = 12;
+const TOP_N = 12;
 
 // y-axis is fixed 0-100% — the story this chart tells (Field shrinking from
 // ~90% toward 0% while a handful of teams' lines climb toward 100%) only
@@ -43,7 +40,6 @@ function fmtDelta(v) {
 // plus a "Field" line for everything outside the shown set. Hover/tap a date
 // to see what was played that day and how it moved the lines.
 export function TitleProbabilityChart({ points, teams, fixtures, results, resolution }) {
-  const [expanded, setExpanded] = useState(false);
   const [hoverIdx, setHoverIdx] = useState(null);
   const svgRef = useRef(null);
 
@@ -55,9 +51,8 @@ export function TitleProbabilityChart({ points, teams, fixtures, results, resolu
     [teams, last]
   );
 
-  const topN = expanded ? EXPANDED_TOP_N : DEFAULT_TOP_N;
-  const visibleCodes = sortedCodes.slice(0, topN);
-  const colors = useMemo(() => assignTeamColors(sortedCodes.slice(0, EXPANDED_TOP_N)), [sortedCodes]);
+  const visibleCodes = sortedCodes.slice(0, TOP_N);
+  const colors = useMemo(() => assignTeamColors(sortedCodes.slice(0, TOP_N)), [sortedCodes]);
 
   const boundaries = useMemo(() => stageBoundaries(fixtures), [fixtures]);
   const xOf = useMemo(() => buildXScale(boundaries, INNER_W), [boundaries]);
@@ -209,14 +204,6 @@ export function TitleProbabilityChart({ points, teams, fixtures, results, resolu
           </span>
         ))}
       </div>
-
-      {sortedCodes.length > DEFAULT_TOP_N && (
-        <div className={styles.footer}>
-          <button className={styles.expandBtn} onClick={() => setExpanded((e) => !e)}>
-            {expanded ? `Show top ${DEFAULT_TOP_N}` : `Show top ${EXPANDED_TOP_N}`}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

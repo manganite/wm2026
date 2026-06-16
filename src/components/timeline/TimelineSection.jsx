@@ -71,7 +71,7 @@ export function TimelineSection({ points, status, progress, resolution, data, re
           For the selected team, how its probability mass is split across "ends in groups / R32 /
           R16 / ... / Champion" — and how that shifts as results come in.
         </p>
-        <StageDistributionChart points={points} teams={teams} fixtures={data.fixtures} defaultCode={defaultCode} />
+        <StageDistributionChart points={points} teams={teams} fixtures={data.fixtures} results={results} resolution={resolution} defaultCode={defaultCode} />
       </div>
 
       <div className="card">

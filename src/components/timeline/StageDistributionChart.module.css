@@ -37,6 +37,62 @@
   stroke: none;
 }
 
+.hoverLine {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.tooltip {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 8px 10px;
+  font-size: 12px;
+  min-width: 180px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tooltipDate {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tooltipMatches {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.tooltipTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tooltipTable td {
+  padding: 1px 0;
+  white-space: nowrap;
+}
+
+.tooltipValue {
+  text-align: right;
+  padding-left: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipDelta {
+  text-align: right;
+  padding-left: 6px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .stageLine {
   stroke: var(--border);
   stroke-width: 1;
