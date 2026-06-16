@@ -1,12 +1,17 @@
-.row {
+.stats {
   display: flex;
   flex-wrap: wrap;
   gap: 28px;
-  align-items: baseline;
+}
+
+.caveat {
+  flex-basis: 100%;
+  margin: 0 0 4px;
 }
 
 .stat {
-  min-width: 160px;
+  min-width: 220px;
+  flex: 1;
 }
 
 .label {
@@ -17,6 +22,20 @@
   margin-bottom: 2px;
 }
 
+.description {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.valueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
 .value {
   font-family: var(--mono);
   font-size: 22px;
@@ -24,13 +43,36 @@
   color: var(--text-heading);
 }
 
+.pctBetter {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.barTrack {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.barLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 .caption {
   flex-basis: 100%;
   font-size: 12px;
-  margin-top: 6px;
-}
-
-.caveat {
-  flex-basis: 100%;
-  margin: 0 0 4px;
+  margin-top: 2px;
 }
