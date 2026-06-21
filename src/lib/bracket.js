@@ -168,6 +168,54 @@ export function describeRef(ref) {
 const DEPTH_LABELS = ["Group exit", "R32", "R16", "QF", "SF", "Final", "Champion"];
 const KO_DEPTH = { R32: 2, R16: 3, QF: 4, SF: 5, F: 6 };
 
+// Representative scorelines for exhaustive clinch/elimination enumeration.
+// Covers the W/D/L outcomes with enough GD/GF variation to exercise the
+// Article 13 tie-break chain (head-to-head, overall GD, overall GF).
+const CANDIDATE_SCORES = [[0, 0], [1, 0], [0, 1], [2, 0], [0, 2], [1, 1], [2, 1], [1, 2]];
+
+// For an incomplete group, check whether each team's fate is already sealed
+// by exhaustively enumerating representative scorelines for the remaining
+// matches and ranking via the engine's own simulateGroup (full Article 13).
+// Returns Map<code, "clinched" | "eliminated" | null> (null = undecided).
+export function detectGroupClinch(ctx, group, results) {
+  const groupFixtures = ctx.matrices.group[group];
+  const remaining = groupFixtures.filter((m) => !results.matches[m.id]);
+  if (remaining.length === 0) return new Map();
+
+  const teamCodes = ctx.teamsByGroup[group].map((t) => t.code);
+  const bestPos = new Map(teamCodes.map((c) => [c, 4]));
+  const worstPos = new Map(teamCodes.map((c) => [c, 0]));
+
+  const enumerate = (idx, merged) => {
+    if (idx === remaining.length) {
+      const table = simulateGroup(group, ctx.teamsByGroup, ctx.matrices, merged, makeRng(1));
+      for (let pos = 0; pos < table.length; pos++) {
+        const code = table[pos].code;
+        if (pos < bestPos.get(code)) bestPos.set(code, pos);
+        if (pos > worstPos.get(code)) worstPos.set(code, pos);
+      }
+      return;
+    }
+    const m = remaining[idx];
+    for (const [h, a] of CANDIDATE_SCORES) {
+      merged.matches[m.id] = [h, a];
+      enumerate(idx + 1, merged);
+    }
+    delete merged.matches[m.id];
+  };
+
+  const merged = { matches: { ...results.matches } };
+  enumerate(0, merged);
+
+  const out = new Map();
+  for (const code of teamCodes) {
+    if (worstPos.get(code) <= 1) out.set(code, "clinched");
+    else if (bestPos.get(code) >= 3) out.set(code, "eliminated");
+    else out.set(code, null);
+  }
+  return out;
+}
+
 // For each team, determine how far they've actually progressed and whether
 // they're eliminated, alive, or pending (third-placed awaiting best-8-of-12).
 // Returns Map<code, { depth, status, furthestStage }>.
@@ -188,6 +236,19 @@ export function deriveTeamStatus(data, results, knockoutResolution) {
     groupComplete[g] = matches.every((m) => results.matches[m.id]);
     if (groupComplete[g]) {
       standings[g] = resolveGroupStandings(ctx, g, results);
+    }
+  }
+
+  // Early clinch/elimination for incomplete groups
+  for (const g of groups) {
+    if (groupComplete[g]) continue;
+    const clinch = detectGroupClinch(ctx, g, results);
+    for (const [code, verdict] of clinch) {
+      if (verdict === "clinched") {
+        status.set(code, { depth: 1, status: "alive", furthestStage: "Advanced" });
+      } else if (verdict === "eliminated") {
+        status.set(code, { depth: 0, status: "eliminated", furthestStage: DEPTH_LABELS[0] });
+      }
     }
   }
 
@@ -215,12 +276,10 @@ export function deriveTeamStatus(data, results, knockoutResolution) {
     const st = standings[g];
     if (!st) continue;
 
-    // positions 0,1 = winner, runner-up → advanced from group (depth 1)
     for (let i = 0; i < 2; i++) {
       status.set(st[i].code, { depth: 1, status: "alive", furthestStage: DEPTH_LABELS[1] });
     }
 
-    // position 2 = third place
     const thirdCode = st[2].code;
     if (!allGroupsDone) {
       status.set(thirdCode, { depth: 0, status: "pending", furthestStage: "3rd (pending)" });
@@ -230,7 +289,6 @@ export function deriveTeamStatus(data, results, knockoutResolution) {
       status.set(thirdCode, { depth: 0, status: "eliminated", furthestStage: DEPTH_LABELS[0] });
     }
 
-    // position 3 = fourth place → eliminated
     status.set(st[3].code, { depth: 0, status: "eliminated", furthestStage: DEPTH_LABELS[0] });
   }
 
