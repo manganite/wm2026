@@ -164,3 +164,102 @@ export function describeRef(ref) {
   if (ref.t) return `Best 3rd (${ref.t.join("/")})`;
   return "TBD";
 }
+
+const DEPTH_LABELS = ["Group exit", "R32", "R16", "QF", "SF", "Final", "Champion"];
+const KO_DEPTH = { R32: 2, R16: 3, QF: 4, SF: 5, F: 6 };
+
+// For each team, determine how far they've actually progressed and whether
+// they're eliminated, alive, or pending (third-placed awaiting best-8-of-12).
+// Returns Map<code, { depth, status, furthestStage }>.
+// Reuses the engine's own group/bracket resolution — no reimplemented tie-breaks.
+export function deriveTeamStatus(data, results, knockoutResolution) {
+  const ctx = buildContext(data, results, PARAMS);
+  const { groups } = ctx;
+  const status = new Map();
+
+  for (const t of data.teams.teams) {
+    status.set(t.code, { depth: 0, status: "alive", furthestStage: DEPTH_LABELS[0] });
+  }
+
+  const groupComplete = {};
+  const standings = {};
+  for (const g of groups) {
+    const matches = data.fixtures.groupStage.filter((m) => m.group === g);
+    groupComplete[g] = matches.every((m) => results.matches[m.id]);
+    if (groupComplete[g]) {
+      standings[g] = resolveGroupStandings(ctx, g, results);
+    }
+  }
+
+  const allGroupsDone = groups.every((g) => groupComplete[g]);
+
+  let qualifiedThirds = null;
+  if (allGroupsDone) {
+    const thirdsRows = [];
+    for (const g of groups) {
+      if (!standings[g]) continue;
+      thirdsRows.push({ group: g, row: standings[g][2] });
+    }
+    if (thirdsRows.length === groups.length) {
+      const bestA = pickBestThirds(thirdsRows, makeRng(1));
+      const bestB = pickBestThirds(thirdsRows, makeRng(2));
+      const sameQualifiers = bestA.every((t, i) => t.group === bestB[i].group);
+      if (sameQualifiers) {
+        qualifiedThirds = new Set(bestA.map((t) => t.row.code));
+      }
+    }
+  }
+
+  for (const g of groups) {
+    if (!groupComplete[g]) continue;
+    const st = standings[g];
+    if (!st) continue;
+
+    // positions 0,1 = winner, runner-up → advanced from group (depth 1)
+    for (let i = 0; i < 2; i++) {
+      status.set(st[i].code, { depth: 1, status: "alive", furthestStage: DEPTH_LABELS[1] });
+    }
+
+    // position 2 = third place
+    const thirdCode = st[2].code;
+    if (!allGroupsDone) {
+      status.set(thirdCode, { depth: 0, status: "pending", furthestStage: "3rd (pending)" });
+    } else if (qualifiedThirds?.has(thirdCode)) {
+      status.set(thirdCode, { depth: 1, status: "alive", furthestStage: DEPTH_LABELS[1] });
+    } else {
+      status.set(thirdCode, { depth: 0, status: "eliminated", furthestStage: DEPTH_LABELS[0] });
+    }
+
+    // position 3 = fourth place → eliminated
+    status.set(st[3].code, { depth: 0, status: "eliminated", furthestStage: DEPTH_LABELS[0] });
+  }
+
+  // Walk knockout matches to update depth for participants
+  for (const m of data.fixtures.knockout) {
+    const played = results.matches[m.id];
+    const slot = knockoutResolution.get(m.id);
+    if (!slot?.bothKnown || !played) continue;
+
+    const winSide = matchWinnerSide(played, slot.home, slot.away);
+    const winnerCode = winSide === "home" ? slot.home : winSide === "away" ? slot.away : null;
+    const loserCode = winSide === "home" ? slot.away : winSide === "away" ? slot.home : null;
+
+    const stageDepth = KO_DEPTH[m.stage] ?? 0;
+
+    if (winnerCode) {
+      const prev = status.get(winnerCode);
+      if (stageDepth > (prev?.depth ?? 0)) {
+        status.set(winnerCode, { depth: stageDepth, status: "alive", furthestStage: DEPTH_LABELS[stageDepth] });
+      }
+    }
+    if (loserCode) {
+      const reachedDepth = (KO_DEPTH[m.stage] ?? 1) - 1;
+      const prev = status.get(loserCode);
+      if (reachedDepth >= (prev?.depth ?? 0)) {
+        status.set(loserCode, { depth: reachedDepth, status: "eliminated", furthestStage: DEPTH_LABELS[reachedDepth] });
+      }
+    }
+  }
+
+  return status;
+}

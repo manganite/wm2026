@@ -4,7 +4,7 @@ import { DEFAULT_RUNS, DEFAULT_SEED, GITHUB_OWNER, GITHUB_REPO } from "./config.
 import { useTournamentData } from "./hooks/useTournamentData.js";
 import { useSimulation } from "./hooks/useSimulation.js";
 import { useTimeline } from "./hooks/useTimeline.js";
-import { buildKnockoutResolution, deriveTournamentProgress } from "./lib/bracket.js";
+import { buildKnockoutResolution, deriveTournamentProgress, deriveTeamStatus } from "./lib/bracket.js";
 import {
   synthesizeGroupStageResults,
   synthesizeFullTournamentResults,
@@ -27,6 +27,10 @@ import { StartPointSelector } from "./components/live/StartPointSelector.jsx";
 import { MatchScorecard } from "./components/scorecard/MatchScorecard.jsx";
 import { CalibrationChart } from "./components/scorecard/CalibrationChart.jsx";
 import { AccuracyOverTimeChart } from "./components/scorecard/AccuracyOverTimeChart.jsx";
+import { MatchPerformanceChart } from "./components/performance/MatchPerformanceChart.jsx";
+import { ProgressionDeltaChart } from "./components/performance/ProgressionDeltaChart.jsx";
+import { computeTeamPerformance, computeProgressionDelta } from "./lib/performance.js";
+import { T0 } from "./lib/timeline.js";
 import { SimulationControls } from "./components/controls/SimulationControls.jsx";
 
 const EMPTY_RESULTS = { matches: {} };
@@ -116,9 +120,27 @@ export default function App() {
     [data, results, actualResolution]
   );
 
+  const teamPerformance = useMemo(
+    () => (matchDetails.length > 0 && teams ? computeTeamPerformance(matchDetails, teams) : []),
+    [matchDetails, teams]
+  );
+  const teamStatus = useMemo(
+    () => (data && results && actualResolution ? deriveTeamStatus(data, results, actualResolution) : null),
+    [data, results, actualResolution]
+  );
+
   // Lifted here (rather than inside TimelineSection) so LatestResultsCard near
   // the top of the page can share the same computation/cache.
   const timeline = useTimeline({ data, results });
+
+  const t0Probs = useMemo(
+    () => timeline.points.find((p) => p.date === T0)?.probs ?? null,
+    [timeline.points]
+  );
+  const progressionData = useMemo(
+    () => (teams && t0Probs && teamStatus ? computeProgressionDelta(teams, t0Probs, teamStatus) : []),
+    [teams, t0Probs, teamStatus]
+  );
 
   if (status === "loading") {
     return (
@@ -285,6 +307,46 @@ export default function App() {
               eloOf={eloOf}
               slotAdvancement={sim.slotAdvancement}
             />
+          </section>
+
+          <section className="section">
+            <h2>Performance vs. expectation</h2>
+            <p className="muted">
+              How each team has performed relative to the model's pre-match expectations — based
+              on Elo-implied expected goals (not shot-based xG). Small samples are noisy; treat
+              these as descriptive, not predictive.
+            </p>
+
+            {matchDetails.length === 0 ? (
+              <p className="muted">
+                No matches have been played yet — this section fills in as results are entered.
+              </p>
+            ) : (
+              <>
+                <div className="card">
+                  <h3>Match performance</h3>
+                  <p className="muted">
+                    Per-match over/under-performance vs. model expectation. Goal difference covers
+                    all matches; points are group-stage only (knockout over-performance shows up in
+                    Progression below). "Expected" means relative to the model's Elo ratings — a
+                    persistent over-performer may simply be underrated.
+                  </p>
+                  <MatchPerformanceChart teamPerformance={teamPerformance} teams={teams} />
+                </div>
+
+                {progressionData.length > 0 && (
+                  <div className="card" style={{ marginTop: "16px" }}>
+                    <h3>Progression vs. expected</h3>
+                    <p className="muted">
+                      How far each team has actually gone vs. how far the pre-tournament model
+                      expected — positive means further than expected. Only eliminated teams have
+                      a final delta; teams still alive are provisional (faded bars).
+                    </p>
+                    <ProgressionDeltaChart progressionData={progressionData} teams={teams} />
+                  </div>
+                )}
+              </>
+            )}
           </section>
 
           <section className="section">

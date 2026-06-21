@@ -110,6 +110,10 @@ export function computeMatchDetails(data, results, knockoutResolution) {
       surprisalBits: -Math.log2(pOutcome),
       correctTendency: argmax === actual,
       date: fixtureDateMap.get(id),
+      lamHome: lamH,
+      lamAway: lamA,
+      xPtsHome: 3 * pred.tendency.homeWin + pred.tendency.draw,
+      xPtsAway: 3 * pred.tendency.awayWin + pred.tendency.draw,
     });
   };
 
