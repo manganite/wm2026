@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { brierTerm, logLossTerm } from "../../lib/accuracy.js";
 import { stageBoundaries } from "../../lib/timeline.js";
-import { buildXScaleForRange, clusterStageMarkers } from "../timeline/chartUtils.js";
+import { buildXScaleAdaptive, clusterStageMarkers } from "../timeline/chartUtils.js";
 import styles from "./AccuracyOverTimeChart.module.css";
 
 const WIDTH = 900;
 const HEIGHT = 240;
-const MARGIN = { top: 16, right: 16, bottom: 30, left: 48 };
+const MARGIN = { top: 16, right: 50, bottom: 30, left: 48 };
 const INNER_W = WIDTH - MARGIN.left - MARGIN.right;
 const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom;
 
@@ -160,9 +160,8 @@ export function AccuracyOverTimeChart({ matchDetails, fixtures }) {
 
   const xOf = useMemo(() => {
     if (cumulative.length === 0) return () => 0;
-    const startDate = boundaries.groupsStart;
-    const endDate = boundaries.F;
-    return buildXScaleForRange(startDate, endDate, INNER_W);
+    const lastDate = cumulative[cumulative.length - 1].date;
+    return buildXScaleAdaptive(boundaries.groupsStart, boundaries.F, lastDate, INNER_W);
   }, [cumulative, boundaries]);
 
   if (matchDetails.length === 0) {

@@ -88,15 +88,16 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
 
   return (
     <div>
-      <p className={`muted ${styles.note}`}>
-        Undetermined slots show which teams the simulation has reaching that position and how
-        often — e.g. "Spain 18%" means Spain ends up in this bracket slot in 18% of all simulated
-        tournaments. Once real results concretely decide a slot (group winner, shootout winner,
-        etc.) it fills in with that team. For matches where both sides are already known but not
-        yet played, a "Projected" scoreline shows the model's single most-likely outcome with its
-        probability — a guess, not a result; the full win/draw/tendency and expected-goals
-        breakdown for the same match is in Fixtures → Knockout stage.
-      </p>
+      <details className={`muted ${styles.note}`}>
+        <summary>Undetermined slots show simulation probabilities; confirmed slots show teams.</summary>
+        <p style={{ marginTop: "6px" }}>
+          "Spain 18%" means Spain ends up in this bracket slot in 18% of all simulated
+          tournaments. Once real results concretely decide a slot it fills in with that team.
+          For matches where both sides are known but not yet played, a "Projected" scoreline
+          shows the model's most-likely outcome — a guess, not a result. The full breakdown
+          is in Fixtures → Knockout stage.
+        </p>
+      </details>
       <div className={styles.roundNav}>
         {rounds.map(({ stage }) => (
           <button

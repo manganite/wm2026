@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { stageBoundaries, matchesOnDate } from "../../lib/timeline.js";
 import { SEGMENTS, segmentsFor } from "../../lib/stageSegments.js";
-import { buildXScale, clusterStageMarkers, formatPointDate, resolveMatchTeams } from "./chartUtils.js";
+import { buildXScale, buildXScaleAdaptive, clusterStageMarkers, formatPointDate, resolveMatchTeams } from "./chartUtils.js";
 import { TeamLabel } from "../common/TeamLabel.jsx";
 import styles from "./StageDistributionChart.module.css";
 
@@ -43,8 +43,12 @@ export function StageDistributionChart({ points, teams, fixtures, results, resol
   const teamsByCode = useMemo(() => Object.fromEntries(teams.map((t) => [t.code, t])), [teams]);
   const sortedTeams = useMemo(() => teams.slice().sort((a, b) => a.name.localeCompare(b.name)), [teams]);
 
+  const last = points[points.length - 1];
   const boundaries = useMemo(() => stageBoundaries(fixtures), [fixtures]);
-  const xOf = useMemo(() => buildXScale(boundaries, INNER_W), [boundaries]);
+  const xOf = useMemo(
+    () => buildXScaleAdaptive(boundaries.groupsStart, boundaries.F, last.date, INNER_W),
+    [boundaries, last.date]
+  );
   const yOf = (v) => INNER_H - v * INNER_H;
 
   const cumByPoint = useMemo(() => {
@@ -57,8 +61,6 @@ export function StageDistributionChart({ points, teams, fixtures, results, resol
       });
     });
   }, [points, code]);
-
-  const last = points[points.length - 1];
 
   function handleMouseMove(e) {
     const rect = svgRef.current.getBoundingClientRect();

@@ -24,6 +24,29 @@ export function buildXScale(boundaries, innerWidth) {
   return buildXScaleForRange(boundaries.groupsStart, boundaries.F, innerWidth);
 }
 
+// Two-segment linear scale: allocates more width to the data region (up to
+// lastDataDate) so early-tournament charts aren't 85% empty. Falls back to
+// a single linear scale when the tournament is nearly complete.
+export function buildXScaleAdaptive(t0Date, endDate, lastDataDate, innerWidth, dataFraction = 0.65) {
+  const t0Ms = Date.parse(t0Date) - DAY_MS;
+  const endMs = Date.parse(endDate);
+  const lastMs = Date.parse(`${lastDataDate}T00:00:00Z`);
+  const totalSpan = endMs - t0Ms;
+  const dataSpan = lastMs - t0Ms;
+  if (dataSpan <= 0 || dataSpan >= totalSpan * 0.8) {
+    return buildXScaleForRange(t0Date, endDate, innerWidth);
+  }
+  const splitX = dataFraction * innerWidth;
+  const futureSpan = endMs - lastMs;
+  return (date) => {
+    const ms = date === T0 ? t0Ms : Date.parse(`${date}T00:00:00Z`);
+    if (ms <= lastMs) {
+      return ((ms - t0Ms) / dataSpan) * splitX;
+    }
+    return splitX + ((ms - lastMs) / futureSpan) * (innerWidth - splitX);
+  };
+}
+
 // Stage-boundary markers (groups end, R32, R16, ...) can land only a few
 // pixels apart — e.g. groups end and R32 are one day apart on a 38-day axis —
 // which makes their text labels overlap. Group markers whose x-positions fall

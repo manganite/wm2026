@@ -1,11 +1,18 @@
 import styles from "./TeamLabel.module.css";
 
-// Renders a team's name (+ optional code/confederation), looked up by code.
-// `teamsByCode` is a plain { code -> team } map built once by the caller.
-export function TeamLabel({ code, teamsByCode, showCode = false, showConfed = false }) {
+export function TeamLabel({ code, teamsByCode, showCode = false, showConfed = false, compact = false }) {
   if (!code) return <span className="muted">TBD</span>;
   const team = teamsByCode[code];
   if (!team) return <span className="mono">{code}</span>;
+
+  if (compact) {
+    return (
+      <span className={styles.label} title={team.name}>
+        <span className={styles.fullName}>{team.name}</span>
+        <span className={styles.compactName}>{team.code}</span>
+      </span>
+    );
+  }
 
   return (
     <span className={styles.label}>

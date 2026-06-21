@@ -149,3 +149,26 @@
   font-size: 12px;
   margin-top: 4px;
 }
+
+@media (max-width: 720px) {
+  .round {
+    min-width: 120px;
+  }
+
+  .bracket {
+    gap: 12px;
+  }
+
+  .slot {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  .advancementRow {
+    font-size: 10px;
+  }
+
+  .roundTitle {
+    font-size: 11px;
+  }
+}

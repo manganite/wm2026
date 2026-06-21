@@ -1,7 +1,26 @@
-/* Lets the wide 9-column table scroll horizontally on narrow screens
-   instead of forcing the whole page to overflow sideways. */
 .tableWrap {
   overflow-x: auto;
+  position: relative;
+}
+
+.tableWrap::after {
+  content: "";
+  position: sticky;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--bg-card));
+  display: block;
+  float: right;
+  margin-top: -100%;
+  height: 100%;
+  transition: opacity 0.2s;
+}
+
+.tableWrap.scrollEnd::after {
+  opacity: 0;
 }
 
 .table th, .table td {
@@ -30,6 +49,21 @@
   color: var(--accent);
 }
 
+.stickyRank,
+.stickyTeam {
+  position: sticky;
+  background: var(--bg-card);
+  z-index: 1;
+}
+
+.stickyRank {
+  left: 0;
+}
+
+.stickyTeam {
+  left: 36px;
+}
+
 .numCell {
   text-align: right;
   width: 1%;
@@ -40,4 +74,19 @@
   width: 1%;
   text-align: right;
   font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .table th, .table td {
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+
+  .table th {
+    font-size: 11px;
+  }
+
+  .stickyTeam {
+    left: 28px;
+  }
 }

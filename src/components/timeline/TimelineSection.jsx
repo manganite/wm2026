@@ -19,6 +19,7 @@ export function TimelineSection({ points, status, progress, resolution, data, re
 
   const last = points[points.length - 1];
   const empty = points.length === 1;
+  const sparse = points.length > 1 && points.length < 4;
   const defaultCode = teams.slice().sort((a, b) => last.probs[b.code].W - last.probs[a.code].W)[0].code;
 
   return (
@@ -31,6 +32,13 @@ export function TimelineSection({ points, status, progress, resolution, data, re
         <p className="muted">
           No results have been entered yet, so the timeline has only its pre-tournament
           baseline. Each section below grows by one point per match day as real results come in.
+        </p>
+      )}
+
+      {sparse && (
+        <p className="muted">
+          Only {points.length - 1} match day{points.length - 1 === 1 ? "" : "s"} of data —
+          these charts will become more informative as the tournament progresses.
         </p>
       )}
 

@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { stageBoundaries, matchesOnDate } from "../../lib/timeline.js";
 import { assignTeamColors, FIELD_CODE } from "../../lib/teamColors.js";
 import { TeamLabel } from "../common/TeamLabel.jsx";
-import { buildXScale, clusterStageMarkers, linePath, formatPointDate, resolveMatchTeams } from "./chartUtils.js";
+import { buildXScale, buildXScaleAdaptive, clusterStageMarkers, linePath, formatPointDate, resolveMatchTeams } from "./chartUtils.js";
 import styles from "./TitleProbabilityChart.module.css";
 
 const WIDTH = 900;
@@ -55,7 +55,10 @@ export function TitleProbabilityChart({ points, teams, fixtures, results, resolu
   const colors = useMemo(() => assignTeamColors(sortedCodes.slice(0, TOP_N)), [sortedCodes]);
 
   const boundaries = useMemo(() => stageBoundaries(fixtures), [fixtures]);
-  const xOf = useMemo(() => buildXScale(boundaries, INNER_W), [boundaries]);
+  const xOf = useMemo(
+    () => buildXScaleAdaptive(boundaries.groupsStart, boundaries.F, last.date, INNER_W),
+    [boundaries, last.date]
+  );
   const yOf = (v) => INNER_H - v * INNER_H;
 
   const fieldValue = (p) => Math.max(0, 1 - visibleCodes.reduce((sum, c) => sum + p.probs[c].W, 0));

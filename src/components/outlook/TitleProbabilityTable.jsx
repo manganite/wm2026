@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { TeamLabel } from "../common/TeamLabel.jsx";
 import { ProbBar } from "../common/ProbBar.jsx";
 import styles from "./TitleProbabilityTable.module.css";
@@ -12,10 +12,10 @@ const COLUMNS = [
   { key: "W", label: "Win title" },
 ];
 
-// Sortable probability table for all 48 teams. Pure display of `probs`
-// (the engine's stage-reach tallies) — no engine calls of its own.
 export function TitleProbabilityTable({ teams, probs }) {
   const [sort, setSort] = useState({ key: "W", dir: -1 });
+  const [atEnd, setAtEnd] = useState(false);
+  const wrapRef = useRef(null);
 
   const rows = useMemo(() => {
     const arr = teams.map((t) => ({ team: t, p: probs[t.code] }));
@@ -27,13 +27,21 @@ export function TitleProbabilityTable({ teams, probs }) {
     setSort((prev) => (prev.key === key ? { key, dir: -prev.dir } : { key, dir: -1 }));
   }
 
+  const onScroll = useCallback(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 1);
+  }, []);
+
+  const wrapClass = `${styles.tableWrap}${atEnd ? ` ${styles.scrollEnd}` : ""}`;
+
   return (
-    <div className={styles.tableWrap}>
+    <div className={wrapClass} ref={wrapRef} onScroll={onScroll}>
       <table className={styles.table}>
         <thead>
           <tr>
-            <th></th>
-            <th>Team</th>
+            <th className={styles.stickyRank}></th>
+            <th className={styles.stickyTeam}>Team</th>
             <th>Group</th>
             {COLUMNS.map((c) => (
               <th
@@ -50,8 +58,8 @@ export function TitleProbabilityTable({ teams, probs }) {
         <tbody>
           {rows.map(({ team, p }, i) => (
             <tr key={team.code}>
-              <td className={styles.rank}>{i + 1}</td>
-              <td>
+              <td className={`${styles.rank} ${styles.stickyRank}`}>{i + 1}</td>
+              <td className={styles.stickyTeam}>
                 <TeamLabel code={team.code} teamsByCode={{ [team.code]: team }} showCode />
               </td>
               <td className="muted">{team.group}</td>

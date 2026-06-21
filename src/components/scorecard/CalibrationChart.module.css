@@ -1,6 +1,7 @@
 .chartArea {
   max-width: 420px;
   margin: 0 auto;
+  position: relative;
 }
 
 .svg {
@@ -37,6 +38,27 @@
   opacity: 0.7;
   stroke: var(--accent-strong);
   stroke-width: 1;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.dotHover {
+  opacity: 1;
+  stroke-width: 2;
+}
+
+.tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%) translateY(-12px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow);
+  z-index: 5;
 }
 
 .summary {

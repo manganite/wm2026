@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { OUTCOMES } from "../../lib/accuracy.js";
 import styles from "./CalibrationChart.module.css";
 
@@ -49,6 +49,7 @@ export function CalibrationChart({ matchDetails }) {
     () => computeCalibrationData(matchDetails),
     [matchDetails]
   );
+  const [hover, setHover] = useState(null);
 
   if (matchDetails.length === 0) {
     return <p className="muted">No matches played yet — this fills in as results are entered.</p>;
@@ -59,6 +60,8 @@ export function CalibrationChart({ matchDetails }) {
 
   const maxCount = Math.max(...points.map((p) => p.count), 1);
   const radiusOf = (count) => 4 + (count / maxCount) * 10;
+
+  const hoverPoint = hover !== null ? points.find((p) => p.binIdx === hover) : null;
 
   return (
     <div>
@@ -81,17 +84,15 @@ export function CalibrationChart({ matchDetails }) {
             <line x1={0} x2={INNER_W} y1={yOf(0)} y2={yOf(1)} className={styles.diagonal} />
 
             {points.map((p) => (
-              <g key={p.binIdx}>
-                <circle
-                  cx={xOf(p.meanPred)}
-                  cy={yOf(p.obsRate)}
-                  r={radiusOf(p.count)}
-                  className={styles.dot}
-                />
-                <title>
-                  Predicted: {(p.meanPred * 100).toFixed(1)}% | Observed: {(p.obsRate * 100).toFixed(1)}% | n={p.count}
-                </title>
-              </g>
+              <circle
+                key={p.binIdx}
+                cx={xOf(p.meanPred)}
+                cy={yOf(p.obsRate)}
+                r={radiusOf(p.count)}
+                className={`${styles.dot}${hover === p.binIdx ? ` ${styles.dotHover}` : ""}`}
+                onMouseEnter={() => setHover(p.binIdx)}
+                onMouseLeave={() => setHover(null)}
+              />
             ))}
 
             <text x={INNER_W / 2} y={INNER_H + 32} className={styles.axisTitle} textAnchor="middle">
@@ -108,6 +109,19 @@ export function CalibrationChart({ matchDetails }) {
             </text>
           </g>
         </svg>
+        {hoverPoint && (
+          <div
+            className={styles.tooltip}
+            style={{
+              left: `${((xOf(hoverPoint.meanPred) + MARGIN.left) / WIDTH) * 100}%`,
+              top: `${((yOf(hoverPoint.obsRate) + MARGIN.top) / HEIGHT) * 100}%`,
+            }}
+          >
+            <div>Predicted: {(hoverPoint.meanPred * 100).toFixed(1)}%</div>
+            <div>Observed: {(hoverPoint.obsRate * 100).toFixed(1)}%</div>
+            <div className="muted">n = {hoverPoint.count}</div>
+          </div>
+        )}
       </div>
 
       <div className={styles.summary}>

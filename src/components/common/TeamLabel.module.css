@@ -16,3 +16,15 @@
   font-size: 11px;
   color: var(--text-muted);
 }
+
+.compactName {
+  display: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 720px) {
+  .fullName { display: none; }
+  .compactName { display: inline; }
+}

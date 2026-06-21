@@ -9,7 +9,7 @@ const SORT_OPTIONS = [
 
 const DEFAULT_VISIBLE = 10;
 
-const OUTCOME_LABEL = { homeWin: "H", draw: "D", awayWin: "A" };
+const OUTCOME_LABEL = { homeWin: "Home", draw: "Draw", awayWin: "Away" };
 
 function fmtPct(v) {
   return `${(v * 100).toFixed(0)}%`;
@@ -78,9 +78,9 @@ export function MatchScorecard({ matchDetails, teams }) {
                     <TeamLabel code={row.away} teamsByCode={teamsByCode} />
                   </td>
                   <td className={styles.tendencyCell}>
-                    <span className={styles.tendencyH}>H {fmtPct(row.tendency.homeWin)}</span>
-                    <span className={styles.tendencyD}>D {fmtPct(row.tendency.draw)}</span>
-                    <span className={styles.tendencyA}>A {fmtPct(row.tendency.awayWin)}</span>
+                    <span className={styles.tendencyH}>Home {fmtPct(row.tendency.homeWin)}</span>
+                    <span className={styles.tendencyD}>Draw {fmtPct(row.tendency.draw)}</span>
+                    <span className={styles.tendencyA}>Away {fmtPct(row.tendency.awayWin)}</span>
                   </td>
                   <td className={styles.predScoreCell}>
                     {row.mostLikelyScore.score[0]}:{row.mostLikelyScore.score[1]}{" "}

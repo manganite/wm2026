@@ -32,6 +32,7 @@ import { ProgressionDeltaChart } from "./components/performance/ProgressionDelta
 import { computeTeamPerformance, computeProgressionDelta } from "./lib/performance.js";
 import { T0 } from "./lib/timeline.js";
 import { SimulationControls } from "./components/controls/SimulationControls.jsx";
+import { SectionNav } from "./components/common/SectionNav.jsx";
 
 const EMPTY_RESULTS = { matches: {} };
 const KNOCKOUT_STAGE_MAP = { afterR32: "R32", afterR16: "R16", afterQF: "QF", afterSF: "SF", fullProjection: "F" };
@@ -194,7 +195,7 @@ export default function App() {
       )}
 
       <div className="section">
-        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "flex-start" }}>
+        <div className="card" style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "flex-start" }}>
           <StartPointSelector value={startPoint} onChange={setStartPoint} />
           <SimulationControls runs={runs} onRunsChange={setRuns} status={sim.status} />
         </div>
@@ -217,7 +218,9 @@ export default function App() {
 
       {sim.status === "done" && (
         <>
-          <section className="section">
+          <SectionNav />
+
+          <section className="section" id="outlook">
             <h2>Tournament outlook</h2>
             <p className="muted">All 48 teams, ranked by title probability — click a column to sort by it.</p>
             <div className="card">
@@ -242,7 +245,7 @@ export default function App() {
             </section>
           )}
 
-          <section className="section">
+          <section className="section" id="progression">
             <h2>Progression — how far will each team go?</h2>
             <p className="muted">
               The top 12 teams by title probability, broken down by the stage their run is most
@@ -275,18 +278,19 @@ export default function App() {
             )}
           </section>
 
-          <section className="section">
+          <section className="section" id="fixtures">
             <h2>Fixtures</h2>
-            <p className="muted">
-              Each unplayed match shows its prediction: Tendency (win/draw/win probabilities), the
-              likeliest score <em>conditional on</em> each outcome — "home win → 2:1 (19%)"
-              means 2:1 is the likeliest scoreline <em>given</em> a home win, not how likely that
-              win itself is (Tendency answers that) — the overall top-5 scorelines, and expected
-              goals. The single most-likely overall scoreline is often the draw even for a clear
-              favourite, since the long tail of winning scorelines (2-0, 2-1, 3-1, …) outweighs
-              any one draw cell; advancement and title odds come from the full distribution over
-              all simulated runs, not any single match's prediction.
-            </p>
+            <details className="muted">
+              <summary>Predictions for each unplayed match, with scoreline breakdowns by outcome.</summary>
+              <p style={{ marginTop: "6px" }}>
+                Tendency shows win/draw/win probabilities. The likeliest score is <em>conditional
+                on</em> each outcome — "home win → 2:1 (19%)" means 2:1 is the likeliest
+                scoreline <em>given</em> a home win, not how likely that win itself is. The single
+                most-likely overall scoreline is often the draw even for a clear favourite, since
+                the long tail of winning scorelines outweighs any one draw cell; advancement and
+                title odds come from the full distribution over all simulated runs.
+              </p>
+            </details>
             <FixturesPanel
               teams={teams}
               fixtures={fixtures}
@@ -297,7 +301,7 @@ export default function App() {
             />
           </section>
 
-          <section className="section">
+          <section className="section" id="bracket">
             <h2>Knockout bracket</h2>
             <KnockoutBracket
               teams={teams}
@@ -309,7 +313,7 @@ export default function App() {
             />
           </section>
 
-          <section className="section">
+          <section className="section" id="performance">
             <h2>Performance vs. expectation</h2>
             <p className="muted">
               How each team has performed relative to the model's pre-match expectations — based
@@ -349,7 +353,7 @@ export default function App() {
             )}
           </section>
 
-          <section className="section">
+          <section className="section" id="report-card">
             <h2>Model report card</h2>
             <p className="muted">
               How well the model's pre-match predictions have matched the real results entered

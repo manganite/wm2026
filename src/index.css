@@ -93,6 +93,7 @@ table {
 
 .section {
   margin: 36px 0;
+  scroll-margin-top: 48px;
 }
 
 .card {
@@ -207,4 +208,13 @@ table {
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 14px;
+}
+
+details > summary {
+  cursor: pointer;
+  font-size: 14px;
+}
+
+details > summary:hover {
+  color: var(--text);
 }
