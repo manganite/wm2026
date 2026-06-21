@@ -1,0 +1,72 @@
+.chartWrap {
+  margin-bottom: 16px;
+}
+
+.chartTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0 0 4px;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.gridline {
+  stroke: var(--border);
+  stroke-width: 0.5;
+}
+
+.axisLabel {
+  font-size: 11px;
+  fill: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.stageLine {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+}
+
+.stageLabel {
+  font-size: 10px;
+  fill: var(--text-muted);
+}
+
+.baselineLine {
+  stroke: var(--loss);
+  stroke-width: 1.5;
+  stroke-dasharray: 8 4;
+  opacity: 0.5;
+}
+
+.baselineLabel {
+  font-size: 10px;
+  fill: var(--loss);
+  opacity: 0.7;
+}
+
+.dailyDot {
+  fill: var(--accent);
+  opacity: 0.2;
+}
+
+.cumLine {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.cumDot {
+  fill: var(--accent);
+}
+
+.caption {
+  font-size: 12px;
+  margin-top: 4px;
+}

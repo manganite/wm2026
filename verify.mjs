@@ -281,6 +281,10 @@ for (const t of data.teams.teams.filter(t => t.group === "A"))
 console.log("\n=== most-likely results for a few opening matches ===");
 for (const id of ["GE1", "GE6", "GH1", "GC1"]) {
   const m = predictions.find(x => x.id === id);
+  if (m.played) {
+    console.log(`  ${id} ${teamName[m.home]} vs ${teamName[m.away]}  — already played: ${m.score[0]}:${m.score[1]}`);
+    continue;
+  }
   const pr = m.prediction;
   const [h, a] = pr.mostLikely.score;
   const top = pr.top5.slice(0, 3).map(t => `${t.score[0]}:${t.score[1]} (${(100 * t.prob).toFixed(0)}%)`).join(", ");

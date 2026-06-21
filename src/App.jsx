@@ -10,7 +10,7 @@ import {
   synthesizeFullTournamentResults,
   PROJECTION_TIE_BREAK_SEED,
 } from "./lib/selectors.js";
-import { computeAccuracy } from "./lib/accuracy.js";
+import { computeAccuracy, computeMatchDetails } from "./lib/accuracy.js";
 
 import { LoadingState, ErrorBanner, WarnBanner } from "./components/common/LoadingState.jsx";
 import { BackToTop } from "./components/common/BackToTop.jsx";
@@ -24,6 +24,9 @@ import { KnockoutBracket } from "./components/bracket/KnockoutBracket.jsx";
 import { NowMarker } from "./components/live/NowMarker.jsx";
 import { AccuracyReadout } from "./components/live/AccuracyReadout.jsx";
 import { StartPointSelector } from "./components/live/StartPointSelector.jsx";
+import { MatchScorecard } from "./components/scorecard/MatchScorecard.jsx";
+import { CalibrationChart } from "./components/scorecard/CalibrationChart.jsx";
+import { AccuracyOverTimeChart } from "./components/scorecard/AccuracyOverTimeChart.jsx";
 import { SimulationControls } from "./components/controls/SimulationControls.jsx";
 
 const EMPTY_RESULTS = { matches: {} };
@@ -106,6 +109,10 @@ export default function App() {
   );
   const accuracy = useMemo(
     () => (data && results && actualResolution ? computeAccuracy(data, results, actualResolution) : null),
+    [data, results, actualResolution]
+  );
+  const matchDetails = useMemo(
+    () => (data && results && actualResolution ? computeMatchDetails(data, results, actualResolution) : []),
     [data, results, actualResolution]
   );
 
@@ -280,18 +287,48 @@ export default function App() {
             />
           </section>
 
-          {accuracy && (
-            <section className="section">
-              <h2>Model accuracy so far</h2>
+          <section className="section">
+            <h2>Model report card</h2>
+            <p className="muted">
+              How well the model's pre-match predictions have matched the real results entered
+              into <span className="mono">data/results.json</span> so far — a running track record
+              of the model's accuracy, calibration, and biggest misses.
+            </p>
+
+            {!accuracy ? (
               <p className="muted">
-                A running track record: how well the model's pre-match predictions have matched the
-                real results entered into <span className="mono">data/results.json</span> so far.
+                No matches have been played yet — this section fills in as results are entered.
               </p>
-              <div className="card">
-                <AccuracyReadout accuracy={accuracy} />
-              </div>
-            </section>
-          )}
+            ) : (
+              <>
+                <div className="card">
+                  <h3>Accuracy summary</h3>
+                  <AccuracyReadout accuracy={accuracy} />
+                </div>
+
+                <div className="card" style={{ marginTop: "16px" }}>
+                  <h3>Accuracy over time</h3>
+                  <p className="muted">
+                    How the model's running Brier score and log-loss have evolved as results come in.
+                  </p>
+                  <AccuracyOverTimeChart matchDetails={matchDetails} fixtures={fixtures} />
+                </div>
+
+                <div className="card" style={{ marginTop: "16px" }}>
+                  <h3>Calibration</h3>
+                  <p className="muted">
+                    Does the model's stated probability match how often that outcome actually happens?
+                  </p>
+                  <CalibrationChart matchDetails={matchDetails} />
+                </div>
+
+                <div className="card" style={{ marginTop: "16px" }}>
+                  <h3>Per-match scorecard</h3>
+                  <MatchScorecard matchDetails={matchDetails} teams={teams} />
+                </div>
+              </>
+            )}
+          </section>
         </>
       )}
       <BackToTop />

@@ -11,12 +11,12 @@
 // Knockout matches are scored on demand via predictMatch(eloHome, eloAway):
 // once a knockout match has been played, its participants are retroactively
 // known, so its pre-match Elo-based tendency is unambiguous to compute.
-import { buildContext, predictKnownMatches, predictMatch, PARAMS } from "../../engine.mjs";
+import { buildContext, predictKnownMatches, predictMatch, eloToLambdas, buildScoreMatrix, PARAMS } from "../../engine.mjs";
 
-const OUTCOMES = ["homeWin", "draw", "awayWin"];
+export const OUTCOMES = ["homeWin", "draw", "awayWin"];
 const EMPTY_RESULTS = { matches: {} };
 
-function outcomeOf(homeGoals, awayGoals) {
+export function outcomeOf(homeGoals, awayGoals) {
   if (homeGoals > awayGoals) return "homeWin";
   if (homeGoals < awayGoals) return "awayWin";
   return "draw";
@@ -24,7 +24,7 @@ function outcomeOf(homeGoals, awayGoals) {
 
 // Multi-class Brier score: mean squared error between the predicted
 // distribution and the one-hot actual outcome, summed across all 3 categories.
-function brierTerm(tendency, actual) {
+export function brierTerm(tendency, actual) {
   let sum = 0;
   for (const outcome of OUTCOMES) {
     const target = outcome === actual ? 1 : 0;
@@ -33,7 +33,7 @@ function brierTerm(tendency, actual) {
   return sum;
 }
 
-function logLossTerm(tendency, actual) {
+export function logLossTerm(tendency, actual) {
   return -Math.log(Math.max(tendency[actual], 1e-9));
 }
 
@@ -70,4 +70,62 @@ export function computeAccuracy(data, results, knockoutResolution) {
 
   if (n === 0) return null;
   return { brier: brierSum / n, logLoss: logLossSum / n, n };
+}
+
+// Per-match evaluation rows for the scorecard, calibration diagram, and
+// accuracy-over-time views. Same scoring convention as computeAccuracy:
+// group matches against the pre-tournament baseline, knockout matches via
+// retroactive predictMatch once participants are known.
+export function computeMatchDetails(data, results, knockoutResolution) {
+  const ctx = buildContext(data, EMPTY_RESULTS, PARAMS);
+  const baseline = predictKnownMatches(data, EMPTY_RESULTS, ctx, PARAMS);
+
+  const fixtureDateMap = new Map();
+  for (const f of data.fixtures.groupStage) fixtureDateMap.set(f.id, f.date);
+  for (const f of data.fixtures.knockout) fixtureDateMap.set(f.id, f.date);
+
+  const rows = [];
+
+  const addRow = (id, stage, group, homeCode, awayCode, played) => {
+    const [homeGoals, awayGoals] = played;
+    const actual = outcomeOf(homeGoals, awayGoals);
+    const pred = predictMatch(ctx.eloOf[homeCode], ctx.eloOf[awayCode], PARAMS);
+    const { lamH, lamA } = eloToLambdas(ctx.eloOf[homeCode], ctx.eloOf[awayCode], PARAMS);
+    const sm = buildScoreMatrix(lamH, lamA, PARAMS);
+    const pScore = Math.max(sm.M[homeGoals]?.[awayGoals] ?? 1e-9, 1e-9);
+    const pOutcome = Math.max(pred.tendency[actual], 1e-9);
+    const argmax = pred.tendency.homeWin >= pred.tendency.draw && pred.tendency.homeWin >= pred.tendency.awayWin
+      ? "homeWin"
+      : pred.tendency.awayWin >= pred.tendency.draw
+        ? "awayWin"
+        : "draw";
+    rows.push({
+      id, stage, group, home: homeCode, away: awayCode,
+      actualScore: [homeGoals, awayGoals],
+      actualOutcome: actual,
+      tendency: pred.tendency,
+      mostLikelyScore: pred.mostLikely,
+      pResult: pScore,
+      pOutcome: pOutcome,
+      surprisalBits: -Math.log2(pOutcome),
+      correctTendency: argmax === actual,
+      date: fixtureDateMap.get(id),
+    });
+  };
+
+  for (const b of baseline) {
+    const played = results.matches[b.id];
+    if (!played) continue;
+    addRow(b.id, "group", b.group, b.home, b.away, played);
+  }
+
+  for (const m of data.fixtures.knockout) {
+    const played = results.matches[m.id];
+    if (!played) continue;
+    const slot = knockoutResolution.get(m.id);
+    if (!slot?.bothKnown) continue;
+    addRow(m.id, m.stage, null, slot.home, slot.away, played);
+  }
+
+  return rows;
 }

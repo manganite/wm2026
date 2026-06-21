@@ -1,0 +1,74 @@
+.chartArea {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.gridline {
+  stroke: var(--border);
+  stroke-width: 0.5;
+}
+
+.axisLabel {
+  font-size: 11px;
+  fill: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.axisTitle {
+  font-size: 12px;
+  fill: var(--text-muted);
+}
+
+.diagonal {
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  opacity: 0.5;
+}
+
+.dot {
+  fill: var(--accent);
+  opacity: 0.7;
+  stroke: var(--accent-strong);
+  stroke-width: 1;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.eceStat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.eceLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.eceValue {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.caption {
+  font-size: 12px;
+  margin-top: 10px;
+}

@@ -1,0 +1,157 @@
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.sortLabel {
+  font-size: 13px;
+}
+
+.sortBtn {
+  font-size: 13px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.sortBtn:hover {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.sortBtnActive {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  border-bottom: 2px solid var(--border);
+}
+
+.table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.surpriseRow {
+  background: var(--loss-bg);
+}
+
+.matchCell {
+  font-weight: 500;
+}
+
+.tendencyCell {
+  display: flex;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.tendencyH { color: var(--win); }
+.tendencyD { color: var(--draw); }
+.tendencyA { color: var(--loss); }
+
+.predScoreCell {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.resultCell {
+  font-weight: 600;
+}
+
+.score {
+  font-family: var(--mono);
+}
+
+.outcomeBadge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.outcomeBadge[data-outcome="homeWin"] {
+  color: var(--win);
+  background: var(--win-bg);
+}
+
+.outcomeBadge[data-outcome="draw"] {
+  color: var(--draw);
+  background: var(--draw-bg);
+}
+
+.outcomeBadge[data-outcome="awayWin"] {
+  color: var(--loss);
+  background: var(--loss-bg);
+}
+
+.pActualCell {
+  font-family: var(--mono);
+  font-size: 13px;
+  text-align: right;
+}
+
+.surprisalCell {
+  font-family: var(--mono);
+  font-size: 13px;
+  text-align: right;
+}
+
+.highSurprisal {
+  color: var(--loss);
+  font-weight: 700;
+}
+
+.expandBtn {
+  display: block;
+  margin: 12px auto 0;
+  padding: 6px 16px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.expandBtn:hover {
+  background: var(--accent-bg);
+}
+
+.note {
+  font-size: 12px;
+  margin-top: 12px;
+}
