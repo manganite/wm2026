@@ -34,10 +34,15 @@
   margin-bottom: 4px;
 }
 
+.chartArea {
+  position: relative;
+}
+
 .svg {
   width: 100%;
   height: auto;
   display: block;
+  overflow: visible;
 }
 
 .gridline {
@@ -53,6 +58,64 @@
 .line {
   fill: none;
   stroke-width: 2;
+}
+
+.hoverLine {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.tooltip {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  padding: 5px 7px;
+  font-size: 11px;
+  min-width: 130px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tooltipDate {
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.tooltipTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tooltipTable td {
+  padding: 1px 0;
+  white-space: nowrap;
+}
+
+.tooltipSwatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.tooltipValue {
+  text-align: right;
+  padding-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipDelta {
+  text-align: right;
+  padding-left: 4px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .legend {
