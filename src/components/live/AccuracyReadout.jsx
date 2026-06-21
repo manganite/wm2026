@@ -78,8 +78,8 @@ function Stat({ label, description, value, pctBetter, fill, worstLabel }) {
         <div className={styles.barFill} style={{ width: `${fill}%` }} />
       </div>
       <div className={styles.barLabels}>
-        <span>0 = perfect</span>
         <span>{worstLabel}</span>
+        <span>0 = perfect</span>
       </div>
     </div>
   );
