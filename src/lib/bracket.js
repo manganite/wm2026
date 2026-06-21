@@ -168,50 +168,116 @@ export function describeRef(ref) {
 const DEPTH_LABELS = ["Group exit", "R32", "R16", "QF", "SF", "Final", "Champion"];
 const KO_DEPTH = { R32: 2, R16: 3, QF: 4, SF: 5, F: 6 };
 
-// Representative scorelines for exhaustive clinch/elimination enumeration.
-// Covers the W/D/L outcomes with enough GD/GF variation to exercise the
-// Article 13 tie-break chain (head-to-head, overall GD, overall GF).
-const CANDIDATE_SCORES = [[0, 0], [1, 0], [0, 1], [2, 0], [0, 2], [1, 1], [2, 1], [1, 2]];
-
-// For an incomplete group, check whether each team's fate is already sealed
-// by exhaustively enumerating representative scorelines for the remaining
-// matches and ranking via the engine's own simulateGroup (full Article 13).
-// Returns Map<code, "clinched" | "eliminated" | null> (null = undecided).
+// Points-based clinch/elimination detection that is correct by construction:
+// never relies on a bounded goal margin. Points bounds are exact; the only
+// tie-break treated as "winnable" is a head-to-head already locked. Everything
+// else is assumed against the team, so verdicts hold under all remaining results.
+//
+// Clinched top-2: at most 1 rival can possibly finish above T.
+// Eliminated: at least 3 rivals are guaranteed to finish above T (can't reach 3rd).
 export function detectGroupClinch(ctx, group, results) {
   const groupFixtures = ctx.matrices.group[group];
   const remaining = groupFixtures.filter((m) => !results.matches[m.id]);
   if (remaining.length === 0) return new Map();
 
   const teamCodes = ctx.teamsByGroup[group].map((t) => t.code);
-  const bestPos = new Map(teamCodes.map((c) => [c, 4]));
-  const worstPos = new Map(teamCodes.map((c) => [c, 0]));
 
-  const enumerate = (idx, merged) => {
-    if (idx === remaining.length) {
-      const table = simulateGroup(group, ctx.teamsByGroup, ctx.matrices, merged, makeRng(1));
-      for (let pos = 0; pos < table.length; pos++) {
-        const code = table[pos].code;
-        if (pos < bestPos.get(code)) bestPos.set(code, pos);
-        if (pos > worstPos.get(code)) worstPos.set(code, pos);
-      }
-      return;
+  // Current points and remaining match count per team
+  const currentPts = {};
+  const remainingCount = {};
+  for (const code of teamCodes) {
+    currentPts[code] = 0;
+    remainingCount[code] = 0;
+  }
+  for (const m of groupFixtures) {
+    const played = results.matches[m.id];
+    if (played) {
+      const [gh, ga] = played;
+      if (gh > ga) currentPts[m.home] += 3;
+      else if (gh < ga) currentPts[m.away] += 3;
+      else { currentPts[m.home] += 1; currentPts[m.away] += 1; }
+    } else {
+      remainingCount[m.home]++;
+      remainingCount[m.away]++;
     }
-    const m = remaining[idx];
-    for (const [h, a] of CANDIDATE_SCORES) {
-      merged.matches[m.id] = [h, a];
-      enumerate(idx + 1, merged);
-    }
-    delete merged.matches[m.id];
-  };
+  }
 
-  const merged = { matches: { ...results.matches } };
-  enumerate(0, merged);
+  // Head-to-head results already played (only the single group-stage meeting).
+  // h2h[A][B] = "A" if A won, "B" if B won, "draw" if drawn, undefined if unplayed.
+  const h2h = {};
+  for (const code of teamCodes) h2h[code] = {};
+  for (const m of groupFixtures) {
+    const played = results.matches[m.id];
+    if (!played) continue;
+    const [gh, ga] = played;
+    if (gh > ga) { h2h[m.home][m.away] = m.home; h2h[m.away][m.home] = m.home; }
+    else if (ga > gh) { h2h[m.home][m.away] = m.away; h2h[m.away][m.home] = m.away; }
+    else { h2h[m.home][m.away] = "draw"; h2h[m.away][m.home] = "draw"; }
+  }
+
+  // Whether T and R still have a remaining match against each other
+  const haveRemaining = {};
+  for (const code of teamCodes) haveRemaining[code] = {};
+  for (const m of remaining) {
+    haveRemaining[m.home][m.away] = true;
+    haveRemaining[m.away][m.home] = true;
+  }
+
+  // T is guaranteed above R iff R can never finish above T.
+  // R can finish above T unless:
+  //   maxPtsR < minPtsT (strict points gap), OR
+  //   they can tie on points AND T has a locked h2h win over R (no remaining
+  //   meeting, T already won their match). Overall GD/GF can be swung
+  //   arbitrarily, so never assume T wins those.
+  function guaranteedAbove(t, r) {
+    const maxPtsR = currentPts[r] + 3 * remainingCount[r];
+    const minPtsT = currentPts[t]; // T loses all remaining
+    if (maxPtsR < minPtsT) return true;
+    if (maxPtsR === minPtsT) {
+      // R can at most tie T on points — T wins iff h2h is locked in T's favour
+      if (h2h[t][r] === t && !haveRemaining[t]?.[r]) return true;
+    }
+    return false;
+  }
+
+  // R can possibly finish above T iff T is NOT guaranteed above R.
+  function canFinishAbove(r, t) {
+    return !guaranteedAbove(t, r);
+  }
+
+  // R is guaranteed above T iff T can never finish above R.
+  // This is the mirror: R has a strict points floor above T's ceiling,
+  // or they tie and R has a locked h2h win.
+  function guaranteedAboveForElim(r, t) {
+    const minPtsR = currentPts[r]; // R loses all remaining
+    const maxPtsT = currentPts[t] + 3 * remainingCount[t];
+    if (minPtsR > maxPtsT) return true;
+    if (minPtsR === maxPtsT) {
+      // T can at most tie R — R wins iff h2h locked in R's favour
+      if (h2h[r][t] === r && !haveRemaining[r]?.[t]) return true;
+    }
+    return false;
+  }
 
   const out = new Map();
-  for (const code of teamCodes) {
-    if (worstPos.get(code) <= 1) out.set(code, "clinched");
-    else if (bestPos.get(code) >= 3) out.set(code, "eliminated");
-    else out.set(code, null);
+  for (const t of teamCodes) {
+    const rivals = teamCodes.filter((c) => c !== t);
+
+    // Clinched top-2: at most 1 rival can possibly finish above T
+    const rivalsCanFinishAbove = rivals.filter((r) => canFinishAbove(r, t)).length;
+    if (rivalsCanFinishAbove <= 1) {
+      out.set(t, "clinched");
+      continue;
+    }
+
+    // Eliminated: at least 3 rivals guaranteed above T (can't reach 3rd)
+    const rivalsGuaranteedAbove = rivals.filter((r) => guaranteedAboveForElim(r, t)).length;
+    if (rivalsGuaranteedAbove >= 3) {
+      out.set(t, "eliminated");
+      continue;
+    }
+
+    out.set(t, null);
   }
   return out;
 }
