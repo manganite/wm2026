@@ -161,6 +161,39 @@
   background: var(--accent-bg);
 }
 
+@media (max-width: 1000px) {
+  .barContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .barLeft {
+    display: none;
+  }
+
+  .center {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .row {
+    grid-template-columns: 100px 1fr 80px;
+    gap: 4px;
+  }
+
+  .name {
+    font-size: 12px;
+  }
+
+  .value {
+    font-size: 11px;
+  }
+
+  .meta {
+    gap: 4px;
+  }
+}
+
 .tooltip {
   margin-top: 14px;
   padding: 12px;

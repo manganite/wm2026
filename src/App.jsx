@@ -165,6 +165,7 @@ export default function App() {
 
   return (
     <main>
+      <a href="#outlook" className="visually-hidden skip-link">Skip to content</a>
       <header className="section">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px" }}>
           <h1 style={{ margin: 0 }}>WC 2026 — Monte-Carlo Outlook</h1>

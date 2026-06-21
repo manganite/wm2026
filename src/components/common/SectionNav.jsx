@@ -34,11 +34,12 @@ export function SectionNav() {
   }, []);
 
   return (
-    <nav className={styles.nav}>
+    <nav className={styles.nav} aria-label="Page sections">
       {SECTIONS.map((s) => (
         <button
           key={s.id}
           className={`${styles.item}${activeId === s.id ? ` ${styles.active}` : ""}`}
+          aria-current={activeId === s.id ? "true" : undefined}
           onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
         >
           {s.label}

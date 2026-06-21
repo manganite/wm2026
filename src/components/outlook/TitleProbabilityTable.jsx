@@ -36,7 +36,7 @@ export function TitleProbabilityTable({ teams, probs }) {
   const wrapClass = `${styles.tableWrap}${atEnd ? ` ${styles.scrollEnd}` : ""}`;
 
   return (
-    <div className={wrapClass} ref={wrapRef} onScroll={onScroll}>
+    <div className={wrapClass} ref={wrapRef} onScroll={onScroll} tabIndex={0} role="region" aria-label="Tournament outlook table">
       <table className={styles.table}>
         <thead>
           <tr>

@@ -76,3 +76,23 @@
   font-size: 12px;
   margin-top: 2px;
 }
+
+@media (max-width: 720px) {
+  .stats {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat {
+    min-width: 160px;
+  }
+
+  .value {
+    font-size: 18px;
+  }
+
+  .stats {
+    gap: 12px;
+  }
+}

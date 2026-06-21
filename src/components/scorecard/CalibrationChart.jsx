@@ -66,10 +66,16 @@ export function CalibrationChart({ matchDetails }) {
   return (
     <div>
       <div className={styles.chartArea}>
-        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className={styles.svg}>
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          className={styles.svg}
+          role="img"
+          aria-label={`Calibration chart — ECE ${(ece * 100).toFixed(1)}pp, based on ${totalCount} predictions from ${matchDetails.length} matches`}
+        >
+          <title>Model calibration</title>
           <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
             {TICKS.map((t) => (
-              <g key={t}>
+              <g key={t} aria-hidden="true">
                 <line x1={0} x2={INNER_W} y1={yOf(t)} y2={yOf(t)} className={styles.gridline} />
                 <line x1={xOf(t)} x2={xOf(t)} y1={0} y2={INNER_H} className={styles.gridline} />
                 <text x={-8} y={yOf(t)} className={styles.axisLabel} textAnchor="end" dominantBaseline="middle">
@@ -123,6 +129,22 @@ export function CalibrationChart({ matchDetails }) {
           </div>
         )}
       </div>
+
+      <table className="visually-hidden">
+        <caption>Calibration data</caption>
+        <thead>
+          <tr><th>Predicted</th><th>Observed</th><th>Count</th></tr>
+        </thead>
+        <tbody>
+          {points.map((p) => (
+            <tr key={p.binIdx}>
+              <td>{(p.meanPred * 100).toFixed(1)}%</td>
+              <td>{(p.obsRate * 100).toFixed(1)}%</td>
+              <td>{p.count}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <div className={styles.summary}>
         <div className={styles.eceStat}>

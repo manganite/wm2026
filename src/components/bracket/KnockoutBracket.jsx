@@ -109,7 +109,7 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
           </button>
         ))}
       </div>
-      <div className={styles.bracket}>
+      <div className={styles.bracket} tabIndex={0} role="region" aria-label="Knockout bracket">
         {rounds.map(({ stage, matches }) => (
           <div className={styles.round} id={`bracket-${stage}`} key={stage}>
             <div className={styles.roundTitle}>{STAGE_TITLES[stage]}</div>

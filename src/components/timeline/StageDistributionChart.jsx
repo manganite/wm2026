@@ -107,12 +107,15 @@ export function StageDistributionChart({ points, teams, fixtures, results, resol
           ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className={styles.svg}
+          role="img"
+          aria-label={`Stage distribution for ${teamsByCode[code]?.name ?? code} — ${((last.probs[code]?.W ?? 0) * 100).toFixed(1)}% champion, ${((1 - (last.probs[code]?.R32 ?? 0)) * 100).toFixed(1)}% out in groups`}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setHoverIdx(null)}
         >
+          <title>Stage distribution for {teamsByCode[code]?.name ?? code}</title>
           <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
             {Y_TICKS.map((f) => (
-              <g key={f}>
+              <g key={f} aria-hidden="true">
                 <line x1={0} x2={INNER_W} y1={yOf(f)} y2={yOf(f)} className={styles.gridline} />
                 <text x={-8} y={yOf(f)} className={styles.axisLabel} textAnchor="end" dominantBaseline="middle">
                   {Math.round(f * 100)}%

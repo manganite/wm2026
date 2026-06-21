@@ -57,13 +57,16 @@ function GroupPanel({ group, members, groupPoints, xOf, yOf, lastPoint }) {
           ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className={styles.svg}
+          role="img"
+          aria-label={`Group ${group} qualification — ${members.map((t) => `${t.name} ${(lastPoint.probs[t.code].R32 * 100).toFixed(0)}%`).join(", ")}`}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setHoverIdx(null)}
         >
+          <title>Group {group} qualification races</title>
           <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
             <rect x={0} y={0} width={INNER_W} height={INNER_H} fill="transparent" />
             {Y_TICKS.map((f) => (
-              <g key={f}>
+              <g key={f} aria-hidden="true">
                 <line x1={0} x2={INNER_W} y1={yOf(f)} y2={yOf(f)} className={styles.gridline} />
                 <text x={-6} y={yOf(f)} className={styles.axisLabel} textAnchor="end" dominantBaseline="middle">
                   {Math.round(f * 100)}%

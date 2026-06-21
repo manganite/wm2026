@@ -81,10 +81,16 @@ function MetricChart({ cumulative, daily, accessor, baseline, label, boundaries,
   return (
     <div className={styles.chartWrap}>
       <h4 className={styles.chartTitle}>{label}</h4>
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className={styles.svg}>
+      <svg
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        className={styles.svg}
+        role="img"
+        aria-label={`${label} — current ${cumulative.length > 0 ? accessor(cumulative[cumulative.length - 1]).toFixed(3) : "N/A"}, random baseline ${baseline.toFixed(2)}`}
+      >
+        <title>{label}</title>
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
           {yTicks.map((t) => (
-            <g key={t}>
+            <g key={t} aria-hidden="true">
               <line x1={0} x2={INNER_W} y1={yOf(t)} y2={yOf(t)} className={styles.gridline} />
               <text x={-8} y={yOf(t)} className={styles.axisLabel} textAnchor="end" dominantBaseline="middle">
                 {t.toFixed(1)}
@@ -192,6 +198,22 @@ export function AccuracyOverTimeChart({ matchDetails, fixtures }) {
         Solid line: cumulative score across all matches played up to each date (lower is better).
         Faint dots: that day's matches only (noisy). Dashed line: a uniform 1/3-1/3-1/3 random guess.
       </p>
+
+      <table className="visually-hidden">
+        <caption>Accuracy over time</caption>
+        <thead>
+          <tr><th>Date</th><th>Brier score</th><th>Log loss</th></tr>
+        </thead>
+        <tbody>
+          {cumulative.map((p) => (
+            <tr key={p.date}>
+              <td>{p.date}</td>
+              <td>{p.brier.toFixed(3)}</td>
+              <td>{p.logLoss.toFixed(3)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

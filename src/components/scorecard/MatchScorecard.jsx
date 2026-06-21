@@ -55,7 +55,7 @@ export function MatchScorecard({ matchDetails, teams }) {
         ))}
       </div>
 
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Match scorecard table">
         <table className={styles.table}>
           <thead>
             <tr>

@@ -28,3 +28,14 @@
   background: var(--accent-bg);
   font-weight: 600;
 }
+
+@media (max-width: 480px) {
+  .tab {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .separator {
+    font-size: 10px;
+  }
+}

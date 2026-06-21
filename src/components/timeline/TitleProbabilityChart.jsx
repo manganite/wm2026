@@ -86,6 +86,14 @@ export function TitleProbabilityChart({ points, teams, fixtures, results, resolu
     ? Math.min(85, Math.max(15, ((xOf(hoverPoint.date) + MARGIN.left) / WIDTH) * 100))
     : null;
 
+  const chartLabel = useMemo(() => {
+    const top = visibleCodes.slice(0, 3).map((c) => {
+      const name = teamsByCode[c]?.name ?? c;
+      return `${name} ${(last.probs[c].W * 100).toFixed(1)}%`;
+    });
+    return `Title probability over time — ${top.join(", ")}`;
+  }, [visibleCodes, last, teamsByCode]);
+
   return (
     <div>
       <div className={styles.chartArea}>
@@ -93,12 +101,15 @@ export function TitleProbabilityChart({ points, teams, fixtures, results, resolu
           ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className={styles.svg}
+          role="img"
+          aria-label={chartLabel}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setHoverIdx(null)}
         >
+          <title>{chartLabel}</title>
           <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
             {Y_TICKS.map((f) => (
-              <g key={f}>
+              <g key={f} aria-hidden="true">
                 <line x1={0} x2={INNER_W} y1={yOf(f)} y2={yOf(f)} className={styles.gridline} />
                 <text x={-8} y={yOf(f)} className={styles.axisLabel} textAnchor="end" dominantBaseline="middle">
                   {Math.round(f * 100)}%
