@@ -123,6 +123,44 @@ noise is applied per run, these reflect genuine uncertainty about who advances.
 Once a match is played and its result entered, that slot collapses to ~100% for
 the real participant in every subsequent run.
 
+### Performance vs. expectation
+
+Tracks how each team has performed relative to the model's pre-match Elo-implied
+expectations (not shot-based xG). Two charts:
+
+- **Match performance** — per-team over/under-performance in goal difference
+  (all matches) and points (group stage only) compared to what the model's
+  pre-match score matrix expected. A persistently over-performing team may
+  simply be underrated by Elo.
+- **Progression vs. expected** — how far each team has actually gone vs. how
+  far the pre-tournament model expected. Only eliminated teams show a final
+  delta; teams still alive are provisional (shown with faded bars).
+
+### Model report card
+
+A running track record of how well the model's pre-match predictions have
+matched the real results entered so far:
+
+- **Accuracy summary** — overall Brier score and log-loss across all played
+  matches, plus tendency accuracy (how often the predicted favourite actually
+  won).
+- **Accuracy over time** — how the running Brier score and log-loss have
+  evolved as results come in, plotted match by match.
+- **Calibration diagram** — bins predicted probabilities and checks whether the
+  model's stated confidence matches observed frequency (e.g. do events
+  predicted at 70% actually happen ~70% of the time?).
+- **Per-match scorecard** — every played match with the model's pre-match
+  prediction, the actual result, and the surprise score (how unlikely the
+  real outcome was under the model).
+
+### Early clinch and elimination detection
+
+While a group is still in progress, the app detects teams that have
+mathematically clinched advancement or been eliminated using a points-based
+analysis of remaining matches. Clinched or eliminated teams are marked in the
+group standings tables — this is computed from the remaining-match combinatorics,
+not from the Monte-Carlo simulation.
+
 ---
 
 ## Match model
