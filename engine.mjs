@@ -27,7 +27,7 @@ export const PARAMS = {
 // Bump whenever PARAMS or the sampling logic changes — the timeline feature
 // (src/hooks/useTimeline.js) hashes this into its localStorage cache keys so
 // stale points get recomputed automatically.
-export const ENGINE_VERSION = 1;
+export const ENGINE_VERSION = 2;
 
 // ---- seedable RNG (mulberry32) ---------------------------------------------
 export function makeRng(seed) {
@@ -401,6 +401,7 @@ export function simulateTournament(ctx, rng, overrides = {}) {
 
   // resolve match participants and play through the bracket
   const resultWinner = {};
+  const resultLoser = {};
   const reached = {}; // code -> furthest stage index
   const STAGE = { R32: 1, R16: 2, QF: 3, SF: 4, F: 5, W: 6 };
 
@@ -414,6 +415,7 @@ export function simulateTournament(ctx, rng, overrides = {}) {
     if (ref.win) return winners[ref.win];
     if (ref.run) return runners[ref.run];
     if (ref.w) return resultWinner[ref.w];
+    if (ref.l) return resultLoser[ref.l];
     if (ref.t) {
       // find which slot this t-set corresponds to (match by allowed set)
       // handled via slotId injected during prep (see buildContext)
@@ -430,11 +432,12 @@ export function simulateTournament(ctx, rng, overrides = {}) {
     }
   }
 
-  // record which team fills every slot ({win}/{run}/{w}/{t} alike) this run —
-  // tallied by runMonteCarlo into per-slot "advancement probabilities" for the
+  // record which team fills every slot ({win}/{run}/{w}/{l}/{t} alike) this run
+  // — tallied by runMonteCarlo into per-slot "advancement probabilities" for the
   // bracket UI (see buildContext: every ref carries a stable `_slotId`). Must
-  // happen inside this loop, in fixtures.knockout's dependency order: a {w}
-  // ref's resolution depends on resultWinner entries set by earlier matches.
+  // happen inside this loop, in fixtures.knockout's dependency order: a {w}/{l}
+  // ref's resolution depends on resultWinner/resultLoser entries set by earlier
+  // matches.
   const slotFills = {};
   for (const m of knockout) {
     const home = resolveRef(m.home), away = resolveRef(m.away);
@@ -442,10 +445,15 @@ export function simulateTournament(ctx, rng, overrides = {}) {
     slotFills[m.away._slotId] = away;
     const w = knockoutWinner(home, away, eloOf, matrices, results, m.id, rng);
     resultWinner[m.id] = w;
+    resultLoser[m.id] = w === home ? away : home;
+    // The third-place play-off is off the win-and-advance tree: both its
+    // participants' runs already ended at the SF, and winning bronze doesn't
+    // advance anyone. So it has no next stage — leave `reached` untouched
+    // rather than Math.max'ing against an undefined (which would yield NaN).
     const nextStage = { R32: STAGE.R16, R16: STAGE.QF, QF: STAGE.SF, SF: STAGE.F, F: STAGE.W }[m.stage];
-    reached[w] = Math.max(reached[w] || 0, nextStage);
+    if (nextStage !== undefined) reached[w] = Math.max(reached[w] || 0, nextStage);
   }
-  return { reached, champion: resultWinner["F"], slotFills };
+  return { reached, champion: resultWinner["F"], bronze: resultWinner["3P"], slotFills };
 }
 
 // ---- context builder (precompute matrices once) -----------------------------
@@ -517,7 +525,11 @@ export function runMonteCarlo(data, results, N = 20000, seed = 12345) {
   const STAGES = ["R32", "R16", "QF", "SF", "F", "W"]; // reached >= idx+1
   const SIGMA = params.RATING_SIGMA || 0;
   const tally = {};
-  for (const t of ctx.teams) tally[t.code] = { R32: 0, R16: 0, QF: 0, SF: 0, F: 0, W: 0 };
+  // P3 (won the third-place play-off) is deliberately NOT part of STAGES: the
+  // ladder is cumulative and monotone by construction, whereas bronze is an
+  // outcome *within* "lost in the SF" — it neither implies nor is implied by
+  // any reached stage. Tallied alongside, exposed as its own probs key.
+  for (const t of ctx.teams) tally[t.code] = { R32: 0, R16: 0, QF: 0, SF: 0, F: 0, W: 0, P3: 0 };
 
   // slotTally[slotId][code] = how many runs that team filled that bracket slot
   // — the raw material for "advancement probabilities feeding unfilled slots".
@@ -532,7 +544,8 @@ export function runMonteCarlo(data, results, N = 20000, seed = 12345) {
       for (const code in ctx.eloOf) noisyEloOf[code] = ctx.eloOf[code] + gaussianSample(rng) * SIGMA;
       runOverrides = { eloOf: noisyEloOf, matrices: buildNoisyMatrices(data.fixtures.groupStage, noisyEloOf, params) };
     }
-    const { reached, slotFills } = simulateTournament(ctx, rng, runOverrides);
+    const { reached, slotFills, bronze } = simulateTournament(ctx, rng, runOverrides);
+    if (bronze && tally[bronze]) tally[bronze].P3++;
     for (const code in reached) {
       if (!tally[code]) continue; // defensive: skip any unresolved ref
       const r = reached[code];
@@ -555,6 +568,7 @@ export function runMonteCarlo(data, results, N = 20000, seed = 12345) {
   for (const code in tally) {
     probs[code] = {};
     for (const s of STAGES) probs[code][s] = tally[code][s] / N;
+    probs[code].P3 = tally[code].P3 / N;
   }
 
   // slotAdvancement[slotId] = [{ code, prob }, ...] sorted high -> low, for

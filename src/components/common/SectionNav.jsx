@@ -4,6 +4,7 @@ import styles from "./SectionNav.module.css";
 const SECTIONS = [
   { id: "outlook", label: "Outlook" },
   { id: "progression", label: "Progression" },
+  { id: "placings", label: "Placings" },
   { id: "timeline", label: "Timeline" },
   { id: "fixtures", label: "Fixtures" },
   { id: "bracket", label: "Bracket" },

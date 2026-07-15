@@ -150,6 +150,48 @@
   margin-top: 4px;
 }
 
+/* The third-place play-off hangs off the bracket rather than continuing it —
+   laid out as its own block below, so the columns above stay a clean
+   win-and-advance tree. */
+.playoff {
+  border-top: 1px solid var(--border);
+  padding: 14px 4px 4px;
+}
+
+.playoffTitle {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.playoffBody {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.playoffMatch {
+  flex: 0 0 auto;
+  width: 200px;
+}
+
+.playoffNote {
+  flex: 1 1 260px;
+  font-size: 12px;
+  margin: 0;
+  max-width: 52ch;
+}
+
+@media (max-width: 720px) {
+  .playoffMatch {
+    width: 100%;
+  }
+}
+
 @media (max-width: 720px) {
   .round {
     min-width: 120px;

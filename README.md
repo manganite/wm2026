@@ -33,6 +33,42 @@ These are *cumulative* — a team that wins the tournament is counted in all six
 columns, not just "Title". Stage probabilities therefore always decrease from
 left to right.
 
+- **Win 3rd place** — fraction of runs where they won the third-place play-off.
+
+That last column is deliberately outside the cumulative ladder, and doesn't
+follow the decrease-to-the-right rule: bronze is won only by a team that
+reaches the semi-final and then *loses* it, so it neither implies nor is
+implied by any column to its left. A finalist's bronze probability is always
+0%; the three columns "Reach Final", "Title" and "Win 3rd place" are not
+nested. Across all 48 teams it sums to ~1.0, exactly like "Title".
+
+### "Who ends up on the podium?" (Final placings chart)
+
+The four placings FIFA actually awards: the Final decides 1st/2nd, the
+third-place play-off decides 3rd/4th. Each bar's **length** is the team's
+chance of finishing in the top four at all (equivalently, of reaching the
+semi-final); the split within it is which position. Teams that can't reach the
+semi-final have no official placing and aren't shown.
+
+Nothing extra is simulated for this — all four are exact rearrangements of the
+tally the engine already keeps (`src/lib/placings.js`):
+
+| Placing | Derivation | Meaning |
+|---|---|---|
+| 1st | `W` | won the Final |
+| 2nd | `F − W` | reached the Final, lost it |
+| 3rd | `P3` | won the third-place play-off |
+| 4th | `(SF − F) − P3` | lost the SF, then lost the play-off |
+
+Each is a strict per-run subset of the term it's subtracted from, so these are
+*exact*, not approximations: 4th can never go negative regardless of
+Monte-Carlo noise, and each position sums to ~1.0 across all 48 teams (exactly
+one team finishes 1st, one 2nd, one 3rd, one 4th). Both properties are asserted
+in `verify.mjs`.
+
+Unlike the progression chart below, a team's four segments do **not** sum to
+100% — they sum to its P(reach SF).
+
 ### "How far will each team go?" (Progression chart)
 
 Each horizontal bar is a **probability distribution over exit stages**: it
@@ -41,7 +77,13 @@ round. The segments are the differences between consecutive cumulative
 probabilities — e.g. the "Lost in R32" segment is `P(reach R32) − P(reach
 R16)`. All segments for one team sum to 100%.
 
-Teams are ranked by title probability. The chart shows the top 12 by default;
+Teams are ranked by title probability, with ties broken by how far they go —
+level on the title, whoever is likelier to reach the Final comes first, then
+the SF, and so on down (`src/lib/ranking.js`, shared with the outlook and
+placings views). That matters once the field narrows and everyone who can't
+win is level on 0: without it the order falls back to `teams.json`'s, which is
+group A→L, and a beaten semi-finalist sorts below a group-stage exit. The
+chart shows the top 12 by default;
 click "Show all 48 teams" to expand.
 
 ### Timeline — how the picture has evolved
@@ -303,6 +345,9 @@ const { probs, predictions, slotAdvancement } = runMonteCarlo(data, results, N, 
 
 // probs[teamCode] = { R32, R16, QF, SF, F, W }  — fraction of N runs where
 //                   the team reached at least that stage (cumulative).
+//                 + P3 — fraction of runs where the team won the third-place
+//                   play-off. NOT part of the cumulative ladder: it's won by
+//                   SF losers only, so it's capped by (SF - F), not by W.
 
 // predictions[]   — one entry per group match with known participants:
 //                   { mostLikely, mostLikelyByOutcome, top5, tendency, expectedGoals }
@@ -342,8 +387,9 @@ node verify.mjs
 The verifier runs the MC (40 000 simulations) and checks:
 
 - Title probabilities sum to ~1.0; R32 probabilities sum to ~32 (one per advancing team); stage probs are monotone.
+- Bronze probabilities sum to ~1.0 (exactly one third place), and no team's exceeds its `SF − Final` gap — the check that would catch the third-place play-off being wired into the advance tree by mistake.
 - **Annex C assertions** — exactly 495 rows, every row has 8 distinct A–L letters, the 495 rows cover all C(12,8) subsets exactly, no third-placed team is assigned to face its own group's winner.
-- **Bracket tree assertions** — R32 has 16 matches, R16 has 8, QF 4, SF 2, Final 1; every slot in each stage is a `{w: id}` reference pointing to a valid match in the preceding stage.
+- **Bracket tree assertions** — R32 has 16 matches, R16 has 8, QF 4, SF 2, third-place play-off 1, Final 1; every slot in each advance-tree stage is a `{w: id}` reference pointing to a valid match in the preceding stage, and the play-off's two slots are `{l: id}` references to the two distinct SFs.
 - **results.json validation** — unknown match IDs, non-integer/negative scores, level knockout score with no winner token (error); knockout result entered before its feeder rounds are resolved (warning).
 - **Calibration check** against bookmaker odds (self-skips if `data/odds.json` is absent).
 
@@ -385,7 +431,7 @@ argmax of tendency, then that outcome's most-likely conditional score).
 - **Pre-tournament** — only real entered results are conditioned on; nothing synthesized.
 - **After groups** — the 72 group matches are filled with modal outcomes; the knockout bracket shows advancement probabilities from the simulation.
 - **After R32 / After R16 / After QF / After SF** — group matches filled, then knockout matches resolved and synthesized stage-by-stage up to and including that round; later rounds still show simulated probabilities.
-- **Full tournament** — all 103 matches synthesized (group stage + all five knockout rounds, R32 through Final).
+- **Full tournament** — all 104 matches synthesized (group stage + all five knockout rounds, R32 through Final, plus the third-place play-off).
 
 These are explicitly illustrative. Chaining the "most likely" pick in each
 match compresses into one low-probability path through the bracket — not a
@@ -440,7 +486,17 @@ instead matched to the official 2026 regulations:
 
 - **R16+ bracket adjacency** mirrors FIFA's official knockout schedule
   (Match 73–104: R32 = 73–88, R16 = 89–96, QF = 97–100, SF = 101–102,
-  Final = 104) verbatim — see the `_comment` in `data/fixtures.json`.
+  third place = 103, Final = 104) verbatim — see the `_comment` in
+  `data/fixtures.json`.
+
+- **The third-place play-off** (Match 103, Jul 18) pairs the losers of the two
+  semi-finals, via the `{l: "<match id>"}` ref kind that only it uses. It is
+  simulated and predicted like any other knockout match — a winner is
+  mandatory, so extra time and penalties apply — but it sits outside the
+  win-and-advance tree: winning it advances nobody, so it never touches a
+  team's reached stage, its progression bar, or its expected-depth delta. Its
+  only outputs are the bronze probability (`probs[code].P3`) and the match's
+  own prediction/accuracy row.
 
 - **Group tiebreakers** follow Article 13 of the 2026 regulations: points,
   then head-to-head mini-league (points/GD/GF from mutual matches, recursively

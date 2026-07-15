@@ -17,6 +17,7 @@ import { BackToTop } from "./components/common/BackToTop.jsx";
 import { GroupStandingsTables } from "./components/groups/GroupStandingsTables.jsx";
 import { TitleProbabilityTable } from "./components/outlook/TitleProbabilityTable.jsx";
 import { ProgressionChart } from "./components/outlook/ProgressionChart.jsx";
+import { PlacingsChart } from "./components/outlook/PlacingsChart.jsx";
 import { TimelineSection } from "./components/timeline/TimelineSection.jsx";
 import { LatestResultsCard } from "./components/timeline/LatestResultsCard.jsx";
 import { FixturesPanel } from "./components/fixtures/FixturesPanel.jsx";
@@ -223,7 +224,11 @@ export default function App() {
 
           <section className="section" id="outlook">
             <h2>Tournament outlook</h2>
-            <p className="muted">All 48 teams, ranked by title probability — click a column to sort by it.</p>
+            <p className="muted">
+              All 48 teams, ranked by title probability — click a column to sort by it. Teams
+              level on a column are ordered by how far they go, so the table reads as a
+              furthest-first ranking once the field narrows.
+            </p>
             <div className="card">
               <TitleProbabilityTable teams={teams} probs={sim.probs} />
             </div>
@@ -257,6 +262,20 @@ export default function App() {
             {progress && <NowMarker progress={progress} />}
             <div className="card">
               <ProgressionChart teams={teams} probs={sim.probs} />
+            </div>
+          </section>
+
+          <section className="section" id="placings">
+            <h2>Final placings — who ends up on the podium?</h2>
+            <p className="muted">
+              The four official placings FIFA awards: the Final decides 1st and 2nd, the
+              third-place play-off decides 3rd and 4th. Each bar's <em>length</em> is the team's
+              chance of finishing in the top four at all; the split within it is where they land.
+              Unlike Progression above, these don't add up to 100% per team — everyone who exits
+              before the semi-finals has no official placing.
+            </p>
+            <div className="card">
+              <PlacingsChart teams={teams} probs={sim.probs} />
             </div>
           </section>
 

@@ -1,8 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { TeamLabel } from "../common/TeamLabel.jsx";
 import { ProbBar } from "../common/ProbBar.jsx";
+import { compareTeams } from "../../lib/ranking.js";
 import styles from "./TitleProbabilityTable.module.css";
 
+// The first six are the cumulative reach ladder (each necessarily <= the one
+// before). "Win 3rd place" is not part of it and sits last deliberately: it's
+// won only by teams that reach the SF and then lose it, so it neither implies
+// nor is implied by any column to its left.
 const COLUMNS = [
   { key: "R32", label: "Reach R32" },
   { key: "R16", label: "Reach R16" },
@@ -10,6 +15,7 @@ const COLUMNS = [
   { key: "SF", label: "Reach SF" },
   { key: "F", label: "Reach Final" },
   { key: "W", label: "Win title" },
+  { key: "P3", label: "Win 3rd place" },
 ];
 
 export function TitleProbabilityTable({ teams, probs }) {
@@ -17,11 +23,14 @@ export function TitleProbabilityTable({ teams, probs }) {
   const [atEnd, setAtEnd] = useState(false);
   const wrapRef = useRef(null);
 
-  const rows = useMemo(() => {
-    const arr = teams.map((t) => ({ team: t, p: probs[t.code] }));
-    arr.sort((a, b) => sort.dir * (a.p[sort.key] - b.p[sort.key]));
-    return arr;
-  }, [teams, probs, sort]);
+  const rows = useMemo(
+    () =>
+      teams
+        .slice()
+        .sort((a, b) => compareTeams(a, b, probs, sort.key, sort.dir))
+        .map((t) => ({ team: t, p: probs[t.code] })),
+    [teams, probs, sort]
+  );
 
   function toggleSort(key) {
     setSort((prev) => (prev.key === key ? { key, dir: -prev.dir } : { key, dir: -1 }));

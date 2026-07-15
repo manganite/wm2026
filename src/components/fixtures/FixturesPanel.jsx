@@ -4,7 +4,15 @@ import { describeRef } from "../../lib/bracket.js";
 import { FixtureGroup } from "./FixtureGroup.jsx";
 import styles from "./FixturesPanel.module.css";
 
-const KO_STAGE_TITLES = { R32: "Round of 32", R16: "Round of 16", QF: "Quarter-finals", SF: "Semi-finals", F: "Final" };
+const KO_STAGE_TITLES = {
+  R32: "Round of 32",
+  R16: "Round of 16",
+  QF: "Quarter-finals",
+  SF: "Semi-finals",
+  "3P": "Third-place play-off",
+  F: "Final",
+};
+const KO_STAGE_ORDER = ["R32", "R16", "QF", "SF", "3P", "F"];
 
 function groupRow(prediction, teamsByCode) {
   return {
@@ -72,7 +80,7 @@ export function FixturesPanel({ teams, fixtures, results, predictions, knockoutR
     for (const m of fixtures.knockout) {
       (byStage[m.stage] ??= []).push(knockoutRow(m, results, knockoutResolution, eloOf, teamsByCode));
     }
-    return ["R32", "R16", "QF", "SF", "F"]
+    return KO_STAGE_ORDER
       .filter((s) => byStage[s])
       .map((s) => ({ title: KO_STAGE_TITLES[s], rows: byStage[s] }));
   }, [fixtures, results, knockoutResolution, eloOf, teamsByCode]);

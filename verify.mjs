@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { runMonteCarlo, predictMatch } from "./engine.mjs";
 import { ANNEX_C_ROWS, ANNEX_C_WINNERS } from "./thirdPlaceAssignments.mjs";
 import { validateResults } from "./src/lib/validateResults.js";
+import { PLACINGS, placingsFor } from "./src/lib/placings.js";
 import { T0, resultsUpTo, timelinePoints, stageBoundaries, compareTimelineDates } from "./src/lib/timeline.js";
 
 const load = p => JSON.parse(readFileSync(new URL(p, import.meta.url)));
@@ -31,14 +32,42 @@ for (const [code, p] of rank.slice(0, 16)) {
 }
 
 // ---- sanity checks ----
-let sumTitle = 0, sumR32 = 0;
-for (const code in probs) { sumTitle += probs[code].W; sumR32 += probs[code].R32; }
+let sumTitle = 0, sumR32 = 0, sumBronze = 0;
+for (const code in probs) { sumTitle += probs[code].W; sumR32 += probs[code].R32; sumBronze += probs[code].P3; }
 console.log("\n=== sanity checks ===");
 console.log(`sum of title probs   = ${sumTitle.toFixed(4)} (expect ~1.0)`);
+console.log(`sum of bronze probs  = ${sumBronze.toFixed(4)} (expect ~1.0 — exactly one 3rd place)`);
 console.log(`sum of R32 probs      = ${sumR32.toFixed(2)} (expect ~32.0 — 32 teams advance)`);
 const monotone = Object.values(probs).every(p =>
   p.R32 >= p.R16 - 1e-9 && p.R16 >= p.QF - 1e-9 && p.QF >= p.SF - 1e-9 && p.SF >= p.F - 1e-9 && p.F >= p.W - 1e-9);
 console.log(`stage probs monotone  = ${monotone} (each round <= previous)`);
+// Bronze is won by exactly the teams that reach the SF but not the Final, so
+// P3 can never exceed "reached SF minus reached Final" — the check that would
+// catch the play-off being wired into the advance tree by mistake.
+const bronzeBounded = Object.values(probs).every(p => p.P3 <= p.SF - p.F + 1e-9);
+console.log(`bronze <= SF - Final  = ${bronzeBounded} (only SF losers play for 3rd)`);
+
+// Final placings (src/lib/placings.js) are derived from W/F/SF/P3 rather than
+// tallied separately, so these check the derivation, not the sampling: exactly
+// one team takes each position, and a team's four placing probabilities
+// reconstruct its P(reach SF) — i.e. nothing is lost or double-counted in the
+// subtractions. (That 4th >= 0 needs no separate check: it restates exactly
+// the `bronze <= SF - Final` bound above.)
+{
+  const colSums = Object.fromEntries(PLACINGS.map(s => [s.key, 0]));
+  let worstRowErr = 0;
+  for (const code in probs) {
+    let rowSum = 0;
+    for (const s of placingsFor(probs[code])) {
+      colSums[s.key] += s.value;
+      rowSum += s.value;
+    }
+    worstRowErr = Math.max(worstRowErr, Math.abs(rowSum - probs[code].SF));
+  }
+  const cols = PLACINGS.map(s => `${s.label} ${colSums[s.key].toFixed(3)}`).join("  ");
+  console.log(`placings sum per pos  = ${cols} (each expect ~1.0)`);
+  console.log(`placings sum per team = P(reach SF), worst error ${worstRowErr.toExponential(1)} (expect ~0)`);
+}
 
 // ---- calibration: model vs. bookmaker outright-winner odds ----
 // A plausibility check, not a tuning target — see data/odds.json's _comment
@@ -154,6 +183,7 @@ function ranksWithTies(codes, key) {
   assert((byStage.R16 ?? []).length ===  8, "Bracket: 8 R16 matches");
   assert((byStage.QF  ?? []).length ===  4, "Bracket: 4 QF matches");
   assert((byStage.SF  ?? []).length ===  2, "Bracket: 2 SF matches");
+  assert((byStage["3P"] ?? []).length === 1, "Bracket: 1 third-place play-off");
   assert((byStage.F   ?? []).length ===  1, "Bracket: 1 Final match");
 
   // Each successive stage's slots must be {w: "<prev stage match id>"}
@@ -172,6 +202,19 @@ function ranksWithTies(codes, key) {
     assert(errs === 0, `Bracket: all ${stage} slots are {w: valid-${feederName}-id}`);
   }
 
+  // The third-place play-off is the only {l: ...} consumer: both its sides must
+  // be the LOSERS of the two SFs (and of different SFs — a match against itself
+  // would otherwise pass a naive per-side check).
+  {
+    const sfIds = new Set((byStage.SF ?? []).map(m => m.id));
+    const p3 = (byStage["3P"] ?? [])[0];
+    const sides = p3 ? ["home", "away"].map(s => p3[s]?.l) : [];
+    assert(
+      !!p3 && sides.every(l => l && sfIds.has(l)) && sides[0] !== sides[1],
+      "Bracket: third-place play-off pairs the losers of the two distinct SFs"
+    );
+  }
+
   // --- Knockout dates (data/fixtures.json) ---
   // Required for the timeline feature: resultsUpTo() needs a date on every
   // fixture, group and knockout alike.
@@ -184,24 +227,25 @@ function ranksWithTies(codes, key) {
     if (!ISO_DATE.test(m.date) || m.date < "2026-06-28") dateErrs++;
   assert(dateErrs === 0, "Bracket: every knockout fixture has a valid ISO date >= 2026-06-28");
 
-  // Each {w: "X"} feeder must be played on or before the match it feeds.
+  // Each {w: "X"} / {l: "X"} feeder must be played on or before the match it feeds.
   let feederDateErrs = 0;
   for (const m of data.fixtures.knockout)
     for (const side of ["home", "away"]) {
-      const feederId = m[side]?.w;
+      const feederId = m[side]?.w ?? m[side]?.l;
       if (!feederId) continue;
       if (!(koDateOf[feederId] <= m.date)) feederDateErrs++;
     }
   assert(feederDateErrs === 0, "Bracket: every knockout match's date is >= its feeders' dates");
 
   // Loose sanity bounds against the official R32 Jun28-Jul3 / R16 Jul4-7 /
-  // QF Jul9-11 / SF Jul14-15 / Final Jul19 windows.
+  // QF Jul9-11 / SF Jul14-15 / third place Jul18 / Final Jul19 windows.
   const STAGE_RANGES = {
-    R32: ["2026-06-28", "2026-07-03"],
-    R16: ["2026-07-04", "2026-07-07"],
-    QF:  ["2026-07-09", "2026-07-11"],
-    SF:  ["2026-07-14", "2026-07-15"],
-    F:   ["2026-07-19", "2026-07-19"],
+    R32:  ["2026-06-28", "2026-07-03"],
+    R16:  ["2026-07-04", "2026-07-07"],
+    QF:   ["2026-07-09", "2026-07-11"],
+    SF:   ["2026-07-14", "2026-07-15"],
+    "3P": ["2026-07-18", "2026-07-18"],
+    F:    ["2026-07-19", "2026-07-19"],
   };
   let rangeErrs = 0;
   for (const [stage, [lo, hi]] of Object.entries(STAGE_RANGES))

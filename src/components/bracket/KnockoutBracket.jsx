@@ -4,7 +4,11 @@ import { describeRef, matchWinnerSide } from "../../lib/bracket.js";
 import { BracketSlot } from "./BracketSlot.jsx";
 import styles from "./KnockoutBracket.module.css";
 
+// The win-and-advance tree only. The third-place play-off is a knockout
+// fixture too, but it's a branch off the tree rather than part of it — it's
+// rendered separately below (see PLAYOFF_STAGE), not as a sixth column.
 const STAGES = ["R32", "R16", "QF", "SF", "F"];
+const PLAYOFF_STAGE = "3P";
 const STAGE_TITLES = {
   R32: "Round of 32",
   R16: "Round of 16",
@@ -63,6 +67,20 @@ function buildMatch(fixture, results, resolution, eloOf, teamsByCode, slotAdvanc
   };
 }
 
+function MatchCard({ match, teamsByCode }) {
+  return (
+    <div className={styles.match}>
+      <BracketSlot {...match.home} teamsByCode={teamsByCode} />
+      <BracketSlot {...match.away} teamsByCode={teamsByCode} />
+      {match.projected && (
+        <div className={styles.projection}>
+          Projected {fmtScore(match.projected.score)} <span>· {fmtPct(match.projected.prob)} chance</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Renders the knockout bracket as one column per round (R32 -> Final), each a
 // flex column with justify-content: space-around so successive halvings line
 // up with their feeder pair's midpoint — the standard CSS-only bracket trick.
@@ -84,6 +102,12 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
         buildMatch(m, results, knockoutResolution, eloOf, teamsByCode, slotAdvancement)
       ),
     }));
+  }, [fixtures, results, knockoutResolution, eloOf, teamsByCode, slotAdvancement]);
+
+  const playoff = useMemo(() => {
+    const fixture = fixtures.knockout.find((m) => m.stage === PLAYOFF_STAGE);
+    if (!fixture) return null;
+    return buildMatch(fixture, results, knockoutResolution, eloOf, teamsByCode, slotAdvancement);
   }, [fixtures, results, knockoutResolution, eloOf, teamsByCode, slotAdvancement]);
 
   return (
@@ -108,6 +132,14 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
             {STAGE_NAV_LABELS[stage]}
           </button>
         ))}
+        {playoff && (
+          <button
+            className={styles.roundNavItem}
+            onClick={() => document.getElementById("bracket-3P")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          >
+            3rd place
+          </button>
+        )}
       </div>
       <div className={styles.bracket} tabIndex={0} role="region" aria-label="Knockout bracket">
         {rounds.map(({ stage, matches }) => (
@@ -115,20 +147,28 @@ export function KnockoutBracket({ teams, fixtures, results, knockoutResolution, 
             <div className={styles.roundTitle}>{STAGE_TITLES[stage]}</div>
             <div className={styles.matches}>
               {matches.map((m) => (
-                <div className={styles.match} key={m.id}>
-                  <BracketSlot {...m.home} teamsByCode={teamsByCode} />
-                  <BracketSlot {...m.away} teamsByCode={teamsByCode} />
-                  {m.projected && (
-                    <div className={styles.projection}>
-                      Projected {fmtScore(m.projected.score)} <span>· {fmtPct(m.projected.prob)} chance</span>
-                    </div>
-                  )}
-                </div>
+                <MatchCard key={m.id} match={m} teamsByCode={teamsByCode} />
               ))}
             </div>
           </div>
         ))}
       </div>
+      {playoff && (
+        <div className={styles.playoff} id="bracket-3P">
+          <div className={styles.playoffTitle}>Third-place play-off</div>
+          <div className={styles.playoffBody}>
+            <div className={styles.playoffMatch}>
+              <MatchCard match={playoff} teamsByCode={teamsByCode} />
+            </div>
+            <p className={`muted ${styles.playoffNote}`}>
+              The two beaten semi-finalists meet the day before the Final. It sits outside the
+              bracket above: it decides the bronze medal, not who advances, so winning it doesn't
+              change how far a team is counted as having gone. Each side's chance of winning it
+              is the "Win 3rd place" column in Tournament outlook.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

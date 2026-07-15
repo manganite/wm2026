@@ -45,7 +45,7 @@ export function synthesizeGroupStageResults(baseResults, groupPredictions) {
 // participants become concretely known. Each newly-resolvable match's score
 // is synthesized the same way (tendency -> outcome-conditional score) and fed
 // back in, so the next pass can resolve whatever it unlocks — propagating
-// forward through R32 -> R16 -> QF -> SF -> F.
+// forward through R32 -> R16 -> QF -> SF -> 3P/F.
 //
 // Reuses buildKnockoutResolution (the exact standings/best-thirds/Annex-C/
 // adjacency logic the real bracket view runs on real results) to discover,
@@ -79,7 +79,10 @@ export function synthesizeGroupStageResults(baseResults, groupPredictions) {
 // a synthesized score next to a still-generic "Best 3rd (...)" label.
 export const PROJECTION_TIE_BREAK_SEED = 1;
 
-const KNOCKOUT_STAGE_ORDER = ["R32", "R16", "QF", "SF", "F"];
+// Chronological, which for "3P" (played the day before the Final) is also the
+// order the projection must fill them in: both are unlocked by the same SF
+// pass, and "After SF" deliberately stops before either.
+const KNOCKOUT_STAGE_ORDER = ["R32", "R16", "QF", "SF", "3P", "F"];
 
 // `stopAfterStage` (default "F") limits how far the knockout projection
 // propagates — passing "R32" fills only R32 matches, "R16" fills R32+R16, etc.
@@ -102,7 +105,7 @@ export function synthesizeFullTournamentResults(
   }
 
   let synthetic = { ...baseResults, matches };
-  const MAX_PASSES = 8; // 1 group pass + R32/R16/QF/SF/F, plus headroom
+  const MAX_PASSES = 8; // 1 group pass + R32/R16/QF/SF/3P+F, plus headroom
   for (let pass = 0; pass < MAX_PASSES; pass++) {
     const resolution = buildKnockoutResolution(data, synthetic, { tieBreakSeed: PROJECTION_TIE_BREAK_SEED });
     const additions = {};

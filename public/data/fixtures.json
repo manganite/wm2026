@@ -1,5 +1,5 @@
 {
-  "_comment": "Group fixtures are the real WC2026 schedule (home team listed first). Knockout refs: {win|run|w|t}. 'win'=group winner, 'run'=group runner-up, 'w'=winner of a prior match, 't'=a best-third slot with an allowed-group set (official FIFA mechanic). R16+ bracket adjacency mirrors FIFA's official knockout schedule (Match 73-104: R32=73-88, R16=89-96, QF=97-100, SF=101-102, Final=104) verbatim — each R32-N here is the unique official match with that exact group-reference pair, and each R16/QF/SF/Final pairing follows the official 'winner of match X meets winner of match Y' tree. Knockout 'date' fields were assigned by matching each fixture's group-reference pair (or, for R16+, its feeders' official match numbers) against the official FIFA Match 73-104 schedule (per Wikipedia's '2026 FIFA World Cup knockout stage' article, captured 2026-06-10): R32 Jun28-Jul3, R16 Jul4-7, QF Jul9 & 10-11, SF Jul14-15, Final Jul19. Match 103 (third place, Jul 18) has no corresponding fixture here per the model's known simplification (no third-place match).",
+  "_comment": "Group fixtures are the real WC2026 schedule (home team listed first). Knockout refs: {win|run|w|t|l}. 'win'=group winner, 'run'=group runner-up, 'w'=winner of a prior match, 'l'=loser of a prior match (only the third-place play-off uses this), 't'=a best-third slot with an allowed-group set (official FIFA mechanic). R16+ bracket adjacency mirrors FIFA's official knockout schedule (Match 73-104: R32=73-88, R16=89-96, QF=97-100, SF=101-102, third place=103, Final=104) verbatim — each R32-N here is the unique official match with that exact group-reference pair, and each R16/QF/SF/Final pairing follows the official 'winner of match X meets winner of match Y' tree. Knockout 'date' fields were assigned by matching each fixture's group-reference pair (or, for R16+, its feeders' official match numbers) against the official FIFA Match 73-104 schedule (per Wikipedia's '2026 FIFA World Cup knockout stage' article, captured 2026-06-10): R32 Jun28-Jul3, R16 Jul4-7, QF Jul9 & 10-11, SF Jul14-15, third place Jul18, Final Jul19. The third-place play-off ('3P', official Match 103) pairs the two semi-final losers; it sits outside the win-and-advance tree, so it never affects any team's reached stage — see engine.mjs's simulateTournament.",
   "groupStage": [
     { "id": "GA1", "group": "A", "date": "2026-06-11", "home": "MEX", "away": "RSA" },
     { "id": "GA2", "group": "A", "date": "2026-06-11", "home": "KOR", "away": "CZE" },
@@ -119,6 +119,8 @@
 
     { "id": "SF-1", "stage": "SF", "date": "2026-07-14", "home": { "w": "QF-1" }, "away": { "w": "QF-2" } },
     { "id": "SF-2", "stage": "SF", "date": "2026-07-15", "home": { "w": "QF-3" }, "away": { "w": "QF-4" } },
+
+    { "id": "3P", "stage": "3P", "date": "2026-07-18", "home": { "l": "SF-1" }, "away": { "l": "SF-2" } },
 
     { "id": "F", "stage": "F", "date": "2026-07-19", "home": { "w": "SF-1" }, "away": { "w": "SF-2" } }
   ]

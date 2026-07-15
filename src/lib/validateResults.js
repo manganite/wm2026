@@ -43,12 +43,15 @@ export function validateResults(results, fixtures) {
   // KO result entered before its feeder matches are played
   // Build a map from result ID -> set of feeder IDs that must be played first.
   // A feeder is "played" if results.matches has a valid entry for it OR if it
-  // feeds from group stage (those slots don't have {w:...} refs).
+  // feeds from group stage (those slots don't have {w:...}/{l:...} refs).
+  // {l:...} counts too: the third-place play-off needs both SFs played before
+  // its participants are known, exactly as the Final does.
   function feedersOf(koMatch) {
     const feeders = [];
     for (const side of ["home", "away"]) {
       const slot = koMatch[side];
-      if (slot?.w) feeders.push(slot.w);
+      const feeder = slot?.w ?? slot?.l;
+      if (feeder) feeders.push(feeder);
     }
     return feeders;
   }

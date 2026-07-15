@@ -6,6 +6,7 @@ const STAGE_LABELS = {
   R16: "Round of 16",
   QF: "Quarter-finals",
   SF: "Semi-finals",
+  "3P": "Third-place play-off",
   F: "Final",
   complete: "Tournament complete",
 };

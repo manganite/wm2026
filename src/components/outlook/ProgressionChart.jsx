@@ -1,18 +1,18 @@
 import { useMemo, useState } from "react";
 import { TeamLabel } from "../common/TeamLabel.jsx";
 import { SEGMENTS, segmentsFor } from "../../lib/stageSegments.js";
+import { byTitleThenDepth } from "../../lib/ranking.js";
 import styles from "./ProgressionChart.module.css";
 
 const DEFAULT_VISIBLE = 12;
 
-// `topN` teams ranked by title-win probability, with an expand/collapse toggle.
+// `topN` teams ranked by title-win probability — ties broken by how far they
+// go, so once the field narrows the visible rows are the teams that actually
+// went furthest rather than whoever sorts first (see lib/ranking.js).
 export function ProgressionChart({ teams, probs, topN = DEFAULT_VISIBLE }) {
   const [expanded, setExpanded] = useState(false);
 
-  const sorted = useMemo(
-    () => teams.slice().sort((a, b) => probs[b.code].W - probs[a.code].W),
-    [teams, probs]
-  );
+  const sorted = useMemo(() => teams.slice().sort(byTitleThenDepth(probs)), [teams, probs]);
   const ranked = expanded ? sorted : sorted.slice(0, topN);
 
   return (

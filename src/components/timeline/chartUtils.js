@@ -30,10 +30,17 @@ export function buildXScale(boundaries, innerWidth) {
 export function buildXScaleAdaptive(t0Date, endDate, lastDataDate, innerWidth, dataFraction = 0.65) {
   const t0Ms = Date.parse(t0Date) - DAY_MS;
   const endMs = Date.parse(endDate);
-  const lastMs = Date.parse(`${lastDataDate}T00:00:00Z`);
+  // `lastDataDate` is a timeline point id, so it can be the T0 sentinel — the
+  // caller passes points[points.length - 1].date, and while the timeline is
+  // still computing, the only point is t0. Date.parse("t0T00:00:00Z") is NaN,
+  // and NaN fails both guards below silently (every comparison is false), so
+  // the scale would return NaN for every date until the first dated point
+  // lands. T0 means "no data region yet", which is exactly the dataSpan <= 0
+  // case: fall back to the plain full-range scale.
+  const lastMs = lastDataDate === T0 ? t0Ms : Date.parse(`${lastDataDate}T00:00:00Z`);
   const totalSpan = endMs - t0Ms;
   const dataSpan = lastMs - t0Ms;
-  if (dataSpan <= 0 || dataSpan >= totalSpan * 0.8) {
+  if (!Number.isFinite(dataSpan) || dataSpan <= 0 || dataSpan >= totalSpan * 0.8) {
     return buildXScaleForRange(t0Date, endDate, innerWidth);
   }
   const splitX = dataFraction * innerWidth;

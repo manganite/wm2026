@@ -1,0 +1,118 @@
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.name {
+  font-size: 13px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The track is the "no top-four finish" remainder — the bar deliberately
+   doesn't fill the row unless the team is certain to reach the SF. */
+.bar {
+  display: flex;
+  height: 22px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+/* 2px surface-coloured gap between adjacent fills: the four placings are three
+   warm hues plus a neutral, and the gap keeps 1st/2nd/3rd from bleeding into
+   one another for a red-green-colourblind reader. */
+.seg + .seg {
+  border-left: 2px solid var(--bg-card);
+}
+
+.seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Gold/orange/grey all sit below 3:1 against the light card, so the values are
+   rendered rather than left to colour alone. The ink is black rather than the
+   usual --text-heading because these four fills are identical in both themes
+   (the app has no separate dark chart steps): black is the only ink that
+   clears 4.5:1 on all of them — the bronze bottoms out at 5.0:1, --text-heading
+   would leave it at 4.4:1. Small bold text on a saturated fill, so AA applies
+   at the normal-text threshold, not the large-text one. */
+.segLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #000000;
+  padding: 0 3px;
+  white-space: nowrap;
+}
+
+.footer {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  justify-content: space-between;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+}
+
+.swatchTrack {
+  background: var(--border);
+}
+
+.expandBtn {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.expandBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: 110px 1fr;
+  }
+}
