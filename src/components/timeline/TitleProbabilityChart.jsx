@@ -46,10 +46,34 @@ export function TitleProbabilityChart({ points, teams, fixtures, results, resolu
   const teamsByCode = useMemo(() => Object.fromEntries(teams.map((t) => [t.code, t])), [teams]);
   const last = points[points.length - 1];
 
-  const sortedCodes = useMemo(
-    () => teams.map((t) => t.code).sort((a, b) => last.probs[b].W - last.probs[a].W),
-    [teams, last]
-  );
+  // Which lines to draw, ranked by each team's highest title probability at any
+  // point on the timeline.
+  //
+  // Ranking by the LATEST probability alone collapses late on: once only the
+  // finalists can win, the other 46 teams are level on 0 and fall back to the
+  // input order, which is teams.json's — i.e. group A-L. England played a
+  // semi-final and wasn't plotted at all, while three group-stage exits were.
+  //
+  // The tie-break the other views use (how far a team goes — lib/ranking.js) is
+  // the wrong question here: it would plot Egypt's flat 0.1% line ahead of
+  // Portugal's 5%-and-falling one. This chart's subject is the title race, so it
+  // ranks on the title race, across the whole window it draws. That also keeps
+  // the Field line honest — Field is "everything not plotted", so drawing the
+  // biggest lines leaves it the genuine long tail (~18% of the title
+  // probability at t0, against ~29% if picked by depth).
+  //
+  // Pre-tournament there's one point, so peak == current and this is exactly
+  // the old ordering. Name last, so the order never depends on the input's.
+  const sortedCodes = useMemo(() => {
+    const peak = {};
+    for (const t of teams) {
+      peak[t.code] = points.reduce((max, p) => Math.max(max, p.probs[t.code].W), 0);
+    }
+    return teams
+      .slice()
+      .sort((a, b) => peak[b.code] - peak[a.code] || a.name.localeCompare(b.name))
+      .map((t) => t.code);
+  }, [teams, points]);
 
   const visibleCodes = sortedCodes.slice(0, TOP_N);
   const colors = useMemo(() => assignTeamColors(sortedCodes.slice(0, TOP_N)), [sortedCodes]);

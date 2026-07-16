@@ -1,4 +1,5 @@
 import { HISTORY_RUNS, DEFAULT_RUNS } from "../../config.js";
+import { byTitleThenDepth } from "../../lib/ranking.js";
 import { LoadingState } from "../common/LoadingState.jsx";
 import { TitleProbabilityChart } from "./TitleProbabilityChart.jsx";
 import { MatchImpactPanel } from "./MatchImpactPanel.jsx";
@@ -20,7 +21,11 @@ export function TimelineSection({ points, status, progress, resolution, data, re
   const last = points[points.length - 1];
   const empty = points.length === 1;
   const sparse = points.length > 1 && points.length < 4;
-  const defaultCode = teams.slice().sort((a, b) => last.probs[b.code].W - last.probs[a.code].W)[0].code;
+  // Which team the exit-stage chart opens on. Title probability picks the
+  // leader, but every eliminated team is level on 0, so this needs the same
+  // depth tie-break the other views use — otherwise, once the title is settled,
+  // "the top team" would just be whoever sorts first in teams.json.
+  const defaultCode = teams.slice().sort(byTitleThenDepth(last.probs))[0].code;
 
   return (
     <>
